@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analysis Result — Short Circuit Company</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="sc-page">
+    <img
+      class="sc-logo"
+      src="https://shortcircuit.company/assets/img/logo-dark.svg"
+      alt="Short Circuit Company logo"
+    >
+
+    <h1 class="sc-headline">Analysis Complete</h1>
+    <p class="sc-subhead">{{ original_name }}</p>
+
+    <hr class="sc-divider">
+
+    <div class="sc-stat-grid">
+      <div class="sc-stat">
+        <span class="sc-stat-value">{{ dxf_version }}</span>
+        <span class="sc-stat-label">DXF Version</span>
+      </div>
+      <div class="sc-stat">
+        <span class="sc-stat-value">{{ entity_count }}</span>
+        <span class="sc-stat-label">Modelspace Entities</span>
+      </div>
+      <div class="sc-stat">
+        <span class="sc-stat-value">{{ layer_count }}</span>
+        <span class="sc-stat-label">Layers</span>
+      </div>
+      <div class="sc-stat">
+        <span class="sc-stat-value">{{ block_count }}</span>
+        <span class="sc-stat-label">Block Definitions</span>
+      </div>
+      <div class="sc-stat">
+        <span class="sc-stat-value">{{ insert_count }}</span>
+        <span class="sc-stat-label">Block Inserts</span>
+      </div>
+    </div>
+
+    <p class="sc-small-head">Entity breakdown</p>
+    <table class="sc-table">
+      <thead>
+        <tr>
+          <th>Entity Type</th>
+          <th>Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entity_type, count in entity_counts.items() %}
+        <tr>
+          <td>{{ entity_type }}</td>
+          <td>{{ count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <p class="sc-small-head">Full summary</p>
+    <div class="sc-summary-box">{{ summary }}</div>
+
+    <div class="sc-actions">
+      <a class="sc-button sc-button--secondary" href="{{ url_for('download', job_id=job_id, file_type='json') }}">
+        Download JSON
+      </a>
+      <a class="sc-button" href="{{ url_for('download', job_id=job_id, file_type='summary') }}">
+        Download Summary
+      </a>
+    </div>
+
+    <p style="text-align:center; margin-top: 32px;">
+      <a class="sc-body" style="color: var(--sc-grey);" href="{{ url_for('index') }}">← Analyze another file</a>
+    </p>
+
+    <div class="sc-footer">Short Circuit Company · DWG Analyzer</div>
+  </div>
+</body>
+</html>

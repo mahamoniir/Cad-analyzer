@@ -1,0 +1,337 @@
+CAD ANALYSIS SUMMARY
+================================================================================
+
+DXF Version: AC1032
+AutoCAD Release: R2018
+
+HEADER
+--------------------------------------------------------------------------------
+
+LAYERS: 37
+--------------------------------------------------------------------------------
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+None | Color: None | Off: False | Frozen: False | Locked: False
+
+MODELSPACE
+--------------------------------------------------------------------------------
+Total Entities: 877
+
+CIRCLE: 53
+DIMENSION: 25
+HATCH: 4
+INSERT: 407
+LINE: 15
+LWPOLYLINE: 192
+TEXT: 181
+
+ENTITIES BY LAYER
+--------------------------------------------------------------------------------
+NO_LAYER: 877
+
+BLOCK DEFINITIONS: 241
+--------------------------------------------------------------------------------
+*Model_Space | Entities: 877 | Types: {'CIRCLE': 53, 'DIMENSION': 25, 'HATCH': 4, 'INSERT': 407, 'LINE': 15, 'LWPOLYLINE': 192, 'TEXT': 181}
+*Paper_Space | Entities: 0 | Types: {}
+*Paper_Space0 | Entities: 0 | Types: {}
+SAM2 | Entities: 3 | Types: {'LINE': 3}
+M-E.FAN-C | Entities: 6 | Types: {'CIRCLE': 1, 'HATCH': 1, 'LWPOLYLINE': 3, 'POLYLINE': 1}
+E-SW_1W-1G | Entities: 9 | Types: {'CIRCLE': 3, 'HATCH': 2, 'LWPOLYLINE': 3, 'POLYLINE': 1}
+E-SW_1W-2G | Entities: 10 | Types: {'CIRCLE': 3, 'HATCH': 2, 'LWPOLYLINE': 4, 'POLYLINE': 1}
+E-L-LEDSTR | Entities: 4 | Types: {'CIRCLE': 1, 'LWPOLYLINE': 2, 'POLYLINE': 1}
+E-Ct-No | Entities: 2 | Types: {'ATTDEF': 1, 'LWPOLYLINE': 1}
+E-L-FSPOT2 | Entities: 6 | Types: {'CIRCLE': 2, 'HATCH': 1, 'LWPOLYLINE': 2, 'POLYLINE': 1}
+E-L-FLBAY1 | Entities: 10 | Types: {'CIRCLE': 2, 'HATCH': 1, 'LWPOLYLINE': 6, 'POLYLINE': 1}
+E-L-FSPOT1S | Entities: 6 | Types: {'CIRCLE': 2, 'HATCH': 1, 'LWPOLYLINE': 2, 'POLYLINE': 1}
+E-SW_2W-1G | Entities: 11 | Types: {'CIRCLE': 3, 'HATCH': 2, 'LWPOLYLINE': 5, 'POLYLINE': 1}
+f15 | Entities: 18 | Types: {'ATTDEF': 13, 'CIRCLE': 3, 'LWPOLYLINE': 2}
+E_WCUT | Entities: 2 | Types: {'LWPOLYLINE': 2}
+E-E.O_CEILING_CH2 | Entities: 16 | Types: {'ARC': 6, 'CIRCLE': 7, 'LWPOLYLINE': 2, 'POLYLINE': 1}
+THH | Entities: 4 | Types: {'CIRCLE': 1, 'LINE': 2, 'LWPOLYLINE': 1}
+SDHD | Entities: 14 | Types: {'ATTDEF': 13, 'INSERT': 1}
+A$C3EB11A0C | Entities: 1001 | Types: {'ARC': 352, 'CIRCLE': 51, 'HATCH': 3, 'INSERT': 406, 'LINE': 1, 'LWPOLYLINE': 188}
+*U17 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U18 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U19 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U20 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U21 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U22 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U23 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U24 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U25 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U26 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U27 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U28 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U29 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U30 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U31 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U32 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U33 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U34 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U35 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U36 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U37 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U38 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U39 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U40 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U41 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U42 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U43 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U44 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U45 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U46 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U47 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U48 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U49 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U50 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U51 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U52 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U53 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U54 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U55 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U56 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U57 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U58 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U59 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U60 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U61 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U62 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U63 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U64 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U65 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U66 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U67 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U68 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U69 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U70 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U71 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U72 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U73 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U74 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U75 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U76 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U77 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U78 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U79 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U80 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U81 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U82 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+*U83 | Entities: 2 | Types: {'LWPOLYLINE': 2}
+A$C3CB15755 | Entities: 1001 | Types: {'ARC': 352, 'CIRCLE': 51, 'HATCH': 3, 'INSERT': 406, 'LINE': 1, 'LWPOLYLINE': 188}
+A$C033027c8 | Entities: 893 | Types: {'ARC': 82, 'CIRCLE': 124, 'ELLIPSE': 4, 'HATCH': 20, 'LINE': 661, 'LWPOLYLINE': 2}
+ff | Entities: 132 | Types: {'ARC': 48, 'CIRCLE': 20, 'LINE': 64}
+bbd | Entities: 48 | Types: {'CIRCLE': 7, 'LINE': 41}
+baby foot pl | Entities: 21045 | Types: {'LINE': 21045}
+catch it | Entities: 46 | Types: {'ARC': 6, 'CIRCLE': 13, 'LINE': 27}
+Punching Machine pl | Entities: 45 | Types: {'LINE': 44, 'POLYLINE': 1}
+A$C89955e36 | Entities: 3 | Types: {'LWPOLYLINE': 3}
+A$C8984f8d0 | Entities: 94 | Types: {'ARC': 52, 'LINE': 40, 'LWPOLYLINE': 2}
+02-GR-BASE-PLANS$0$DOOR-SINGLE | Entities: 32 | Types: {'ARC': 9, 'LINE': 12, 'LWPOLYLINE': 11}
+wc$0$ACAD_Planta | Entities: 108 | Types: {'ARC': 32, 'CIRCLE': 10, 'LINE': 65, 'LWPOLYLINE': 1}
+02-GR-BASE-PLANS$0$WIN-SINGLE | Entities: 41 | Types: {'ARC': 14, 'LINE': 23, 'LWPOLYLINE': 4}
+ER | Entities: 44 | Types: {'LINE': 40, 'LWPOLYLINE': 4}
+fg | Entities: 13 | Types: {'HATCH': 1, 'LINE': 12}
+A$Caba3f22f | Entities: 2202 | Types: {'CIRCLE': 176, 'ELLIPSE': 280, 'HATCH': 13, 'LINE': 1297, 'SPLINE': 436}
+wasdf | Entities: 4 | Types: {'LINE': 1, 'LWPOLYLINE': 1, 'SPLINE': 2}
+sdg | Entities: 5 | Types: {'INSERT': 4, 'LWPOLYLINE': 1}
+magic 7 | Entities: 10 | Types: {'LINE': 4, 'LWPOLYLINE': 6}
+СБИ05_2800х1550 | Entities: 50 | Types: {'ARC': 6, 'CIRCLE': 16, 'LINE': 28}
+WIDE | Entities: 89 | Types: {'ARC': 5, 'LINE': 79, 'LWPOLYLINE': 4, 'TEXT': 1}
+A$C1091693A | Entities: 97 | Types: {'ARC': 28, 'LINE': 68, 'TEXT': 1}
+A$C0D5165A1 | Entities: 137 | Types: {'ARC': 8, 'LINE': 122, 'LWPOLYLINE': 6, 'TEXT': 1}
+A$C3C9B172C | Entities: 261 | Types: {'ARC': 74, 'CIRCLE': 10, 'LINE': 155, 'LWPOLYLINE': 21, 'TEXT': 1}
+door 2 | Entities: 20 | Types: {'ARC': 9, 'LINE': 8, 'LWPOLYLINE': 3}
+vr2 | Entities: 65 | Types: {'ARC': 6, 'LINE': 54, 'LWPOLYLINE': 4, 'TEXT': 1}
+HANDY | Entities: 52 | Types: {'LINE': 52}
+A$C6db180e3 | Entities: 12 | Types: {'CIRCLE': 2, 'ELLIPSE': 2, 'LINE': 6, 'SPLINE': 2}
+*U111 | Entities: 32 | Types: {'ARC': 9, 'LINE': 12, 'LWPOLYLINE': 11}
+*U112 | Entities: 32 | Types: {'ARC': 9, 'LINE': 12, 'LWPOLYLINE': 11}
+*U113 | Entities: 32 | Types: {'ARC': 9, 'LINE': 12, 'LWPOLYLINE': 11}
+*A114 | Entities: 1 | Types: {'HATCH': 1}
+*A115 | Entities: 1 | Types: {'HATCH': 1}
+*A116 | Entities: 1 | Types: {'HATCH': 1}
+*A117 | Entities: 1 | Types: {'HATCH': 1}
+*A118 | Entities: 1 | Types: {'HATCH': 1}
+*A119 | Entities: 1 | Types: {'HATCH': 1}
+*A120 | Entities: 1 | Types: {'HATCH': 1}
+*A121 | Entities: 1 | Types: {'HATCH': 1}
+*A122 | Entities: 1 | Types: {'HATCH': 1}
+*A123 | Entities: 1 | Types: {'HATCH': 1}
+*A124 | Entities: 1 | Types: {'HATCH': 1}
+*A125 | Entities: 1 | Types: {'HATCH': 1}
+*A126 | Entities: 1 | Types: {'HATCH': 1}
+*A127 | Entities: 1 | Types: {'HATCH': 1}
+*A128 | Entities: 1 | Types: {'HATCH': 1}
+*A129 | Entities: 1 | Types: {'HATCH': 1}
+*A130 | Entities: 1 | Types: {'HATCH': 1}
+*U131 | Entities: 70 | Types: {'ARC': 4, 'CIRCLE': 16, 'LWPOLYLINE': 47, 'MTEXT': 3}
+*A132 | Entities: 1 | Types: {'HATCH': 1}
+*A133 | Entities: 1 | Types: {'HATCH': 1}
+*U134 | Entities: 41 | Types: {'ARC': 14, 'LINE': 23, 'LWPOLYLINE': 4}
+*U135 | Entities: 32 | Types: {'ARC': 9, 'LINE': 12, 'LWPOLYLINE': 11}
+table-2 | Entities: 29 | Types: {'ARC': 8, 'CIRCLE': 1, 'LINE': 20}
+A$C583A52DB | Entities: 2 | Types: {'HATCH': 1, 'LWPOLYLINE': 1}
+f | Entities: 467 | Types: {'ARC': 51, 'CIRCLE': 1, 'HATCH': 2, 'INSERT': 45, 'LINE': 341, 'LWPOLYLINE': 6, 'POLYLINE': 1, 'TEXT': 20}
+*D139 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D140 | Entities: 9 | Types: {'INSERT': 2, 'LINE': 3, 'MTEXT': 1, 'POINT': 3}
+*D141 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D142 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D143 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D144 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D145 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D146 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D147 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D148 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D149 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D150 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D151 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D152 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D153 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D154 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D155 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D156 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D157 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D158 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D159 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D160 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D161 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D162 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D163 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D164 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D165 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D166 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D167 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D168 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D169 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D170 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D171 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D172 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D173 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D174 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D175 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D176 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D177 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D178 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D179 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D180 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D181 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D182 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D183 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D184 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D185 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D186 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D187 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D188 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D189 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D190 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D191 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D192 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D193 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D194 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D195 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D196 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D197 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D198 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D199 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D200 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D201 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D202 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D203 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D204 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D205 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D206 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D207 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D208 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D209 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D210 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D211 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D212 | Entities: 11 | Types: {'INSERT': 2, 'LINE': 5, 'MTEXT': 1, 'POINT': 3}
+*D213 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D214 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D215 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D216 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D217 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D218 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D219 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D220 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D221 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D222 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D223 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D224 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D225 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D226 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D227 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D228 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D229 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D230 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D231 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D232 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D233 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D234 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D235 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D236 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+*D237 | Entities: 10 | Types: {'LINE': 4, 'MTEXT': 1, 'POINT': 3, 'SOLID': 2}
+AMPLIFIER | Entities: 2 | Types: {'LWPOLYLINE': 1, 'TEXT': 1}
+
+BLOCK INSERTS: 1484
+--------------------------------------------------------------------------------
+UNKNOWN: 1484
+
+OBJECTS: 6821
+--------------------------------------------------------------------------------
+ACAD_PROXY_OBJECT: 267
+ACDBDETAILVIEWSTYLE: 2
+ACDBDICTIONARYWDFLT: 1
+ACDBPLACEHOLDER: 1
+ACDBSECTIONVIEWSTYLE: 2
+CELLSTYLEMAP: 2
+DICTIONARY: 3031
+DICTIONARYVAR: 11
+DIMASSOC: 73
+FIELD: 1956
+FIELDLIST: 1
+LAYOUT: 3
+MATERIAL: 3
+MLEADERSTYLE: 2
+MLINESTYLE: 1
+SCALE: 33
+SORTENTSTABLE: 101
+TABLESTYLE: 2
+VISUALSTYLE: 25
+XRECORD: 1304
+
+ENTITY DATABASE TOTAL: 53658

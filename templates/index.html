@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SC DWG Analyzer — Short Circuit Company</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="sc-page">
+    <img
+      class="sc-logo"
+      src="https://shortcircuit.company/assets/img/logo-dark.svg"
+      alt="Short Circuit Company logo"
+    >
+
+    <h1 class="sc-headline">DWG Analyzer</h1>
+    <p class="sc-subhead">Upload a DWG file for a full CAD structure report</p>
+
+    <hr class="sc-divider">
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="sc-flash">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('analyze') }}" method="post" enctype="multipart/form-data">
+      <div class="sc-dropzone">
+        <p class="sc-body">Select a .dwg file (max 100&nbsp;MB)</p>
+        <input
+          class="sc-file-input"
+          type="file"
+          name="dwg_file"
+          accept=".dwg"
+          required
+        >
+        <button class="sc-button" type="submit">Analyze File</button>
+      </div>
+    </form>
+
+    <p class="sc-small-head">How it works</p>
+    <p class="sc-body">
+      The file is loaded through the ODA File Converter, then scanned layer
+      by layer, block by block, and entity by entity. You'll get an on-screen
+      summary plus downloadable JSON and text reports.
+    </p>
+
+    <div class="sc-footer">Short Circuit Company · DWG Analyzer</div>
+  </div>
+</body>
+</html>
