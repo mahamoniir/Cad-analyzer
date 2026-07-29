@@ -30,7 +30,7 @@ MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100 MB upload cap
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
-app.secret_key = os.environ.get("SECRET_KEY", "sc-dwg-analyzer-dev-key")
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "sc-dwg-analyzer-dev-key")
 
 
 def allowed_file(filename: str) -> bool:
