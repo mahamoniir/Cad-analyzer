@@ -21,6 +21,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfontconfig1 \
     fontconfig \
     libxcb-util1 \
+    libxkbcommon0 \
+    libxkbcommon-x11-0 \
+    libxcb-cursor0 \
+    libxcb-icccm4 \
+    libxcb-image0 \
+    libxcb-keysyms1 \
+    libxcb-randr0 \
+    libxcb-render-util0 \
+    libxcb-shape0 \
+    libxcb-xinerama0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Compat symlink: ODA's package looks for libxcb-util.so.0, which no longer
