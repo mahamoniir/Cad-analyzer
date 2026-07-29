@@ -1,34 +1,59 @@
+# syntax=docker/dockerfile:1
 FROM python:3.11-slim
 
-# --- System libs the ODA File Converter (Qt6) needs, plus Xvfb to run it headless ---
+# ------------------------------------------------------------
+# System dependencies:
+#   xvfb            -> fake display so ODA File Converter's GUI can run headless
+#   wget            -> fetch the installer at build time
+#   libxrender1 etc -> Qt/X11 runtime libs ODA File Converter needs
+# ------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
-    libqt6core6 libqt6gui6 libqt6widgets6 \
-    libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
-    libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xkb1 \
-    libxkbcommon-x11-0 fontconfig ca-certificates \
+    wget \
+    ca-certificates \
+    libxrender1 \
+    libxext6 \
+    libsm6 \
+    libglib2.0-0 \
+    libfontconfig1 \
+    fontconfig \
     && rm -rf /var/lib/apt/lists/*
-
-# --- Install ODA File Converter from the .deb you committed to the repo ---
-COPY deploy/ODAFileConverter.deb /tmp/oda.deb
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends /tmp/oda.deb \
-    && rm /tmp/oda.deb \
-    && rm -rf /var/lib/apt/lists/*
-
-# Newer Debian ships libxcb-util.so.1 but ODA looks for .so.0 — symlink fix
-RUN ln -sf /usr/lib/x86_64-linux-gnu/libxcb-util.so.1 \
-           /usr/lib/x86_64-linux-gnu/libxcb-util.so.0 || true
-
-ENV DISPLAY=:99
 
 WORKDIR /app
+
+# ------------------------------------------------------------
+# Download ODA File Converter here instead of committing it to git —
+# the installer is 50+ MB, which is awkward to keep in a repo and not
+# something ODA's terms clearly permit you to redistribute yourself.
+#
+# Before building, confirm the current filename/version at:
+#   https://www.opendesign.com/guestfiles/oda_file_converter
+# and update ODA_DEB_URL below if it has changed.
+# ------------------------------------------------------------
+ARG ODA_DEB_URL="https://www.opendesign.com/guestfiles/get?filename=ODAFileConverter_QT6_lnxX64_8.3dll_25.11.deb"
+RUN wget -q -O /tmp/ODAFileConverter.deb "$ODA_DEB_URL" \
+    && apt-get update \
+    && apt-get install -y /tmp/ODAFileConverter.deb \
+    && rm /tmp/ODAFileConverter.deb \
+    && rm -rf /var/lib/apt/lists/*
+
+# ------------------------------------------------------------
+# IMPORTANT — verify this path matches the installed package.
+# See the build-log discovery trick in the chat if unsure.
+# ------------------------------------------------------------
+ENV ODA_REAL_BIN=/usr/bin/ODAFileConverter
+
+# Headless wrapper: shadows the real "ODAFileConverter" command on PATH
+# (/usr/local/bin comes before /usr/bin in the default PATH) so ezdxf's
+# odafc.readfile(), which just calls "ODAFileConverter", runs it under xvfb.
+COPY deploy/odafc-wrapper.sh /usr/local/bin/ODAFileConverter
+RUN chmod +x /usr/local/bin/ODAFileConverter
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN mkdir -p uploads output
 
-# Xvfb provides the fake display ODAFileConverter needs even in "headless" mode,
-# then gunicorn runs the Flask app on Railway's assigned $PORT
-CMD sh -c "Xvfb :99 -screen 0 1024x768x16 & exec gunicorn -b 0.0.0.0:$PORT app:app"
+# Railway sets $PORT at runtime
+ENV PORT=8080
+CMD gunicorn -w 2 -b 0.0.0.0:${PORT} app:app
