@@ -6,6 +6,8 @@ FROM python:3.11-slim
 #   xvfb            -> fake display so ODA File Converter's GUI can run headless
 #   wget            -> fetch the installer at build time
 #   libxrender1 etc -> Qt/X11 runtime libs ODA File Converter needs
+#   libxcb-util1     -> modern Debian ships libxcb-util.so.1; ODA's package
+#                        expects libxcb-util.so.0, so we symlink it below
 # ------------------------------------------------------------
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb \
@@ -17,20 +19,29 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     libfontconfig1 \
     fontconfig \
+    libxcb-util1 \
     && rm -rf /var/lib/apt/lists/*
+
+# Compat symlink: ODA's package looks for libxcb-util.so.0, which no longer
+# ships by default on modern Debian/Ubuntu (only .so.1 exists).
+RUN lib_dir="/usr/lib/x86_64-linux-gnu" \
+    && if [ -f "$lib_dir/libxcb-util.so.1" ] && [ ! -e "$lib_dir/libxcb-util.so.0" ]; then \
+         ln -s "$lib_dir/libxcb-util.so.1" "$lib_dir/libxcb-util.so.0"; \
+       fi
 
 WORKDIR /app
 
 # ------------------------------------------------------------
-# Download ODA File Converter here instead of committing it to git —
-# the installer is 50+ MB, which is awkward to keep in a repo and not
-# something ODA's terms clearly permit you to redistribute yourself.
+# Download ODA File Converter from a GitHub Release asset you control,
+# instead of ODA's site (whose versioned filename changes over time and
+# isn't reliable to hardcode) or committing the 50+ MB file to git.
 #
-# Before building, confirm the current filename/version at:
-#   https://www.opendesign.com/guestfiles/oda_file_converter
-# and update ODA_DEB_URL below if it has changed.
+# 1. Download the current .deb manually from:
+#    https://www.opendesign.com/guestfiles/oda_file_converter
+# 2. Upload it as a Release asset in your GitHub repo.
+# 3. Put that asset's direct download URL below.
 # ------------------------------------------------------------
-ARG ODA_DEB_URL="https://www.opendesign.com/guestfiles/get?filename=ODAFileConverter_QT6_lnxX64_8.3dll_25.11.deb"
+ARG ODA_DEB_URL="https://github.com/mahamoniir/Cad-analyzer/releases/download/deps-v1/ODAFileConverter.deb"
 RUN wget -q -O /tmp/ODAFileConverter.deb "$ODA_DEB_URL" \
     && apt-get update \
     && apt-get install -y /tmp/ODAFileConverter.deb \
@@ -39,7 +50,6 @@ RUN wget -q -O /tmp/ODAFileConverter.deb "$ODA_DEB_URL" \
 
 # ------------------------------------------------------------
 # IMPORTANT — verify this path matches the installed package.
-# See the build-log discovery trick in the chat if unsure.
 # ------------------------------------------------------------
 ENV ODA_REAL_BIN=/usr/bin/ODAFileConverter
 
