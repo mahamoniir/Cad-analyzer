@@ -100,28 +100,6 @@ class DWGReader:
     # FIND ODA
     # =========================================================
 
-    # def find_oda_converter(self):
-    #     possible_paths = [
-    #         self.oda_path,
-    #         r"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe",
-    #         r"C:\Program Files\ODA\ODAFileConverter 26.5.0\ODAFileConverter.exe",
-    #         r"C:\Program Files\ODA\ODAFileConverter 26.6.0\ODAFileConverter.exe",
-    #         r"C:\Program Files\ODA\ODAFileConverter 27.0.0\ODAFileConverter.exe",
-    #         r"C:\Program Files (x86)\ODA\ODAFileConverter\ODAFileConverter.exe",
-    #         r"C:\Program Files (x86)\ODA\ODAFileConverter 26.5.0\ODAFileConverter.exe",
-    #         r"C:\Program Files (x86)\ODA\ODAFileConverter 26.6.0\ODAFileConverter.exe",
-    #         r"C:\Program Files\ODA\ODAFileConverter 27.1.0\ODAFileConverter.exe",
-    #     ]
-
-    #     for path in possible_paths:
-    #         if not path:
-    #             continue
-    #         path = Path(path)
-    #         if path.exists():
-    #             return str(path)
-
-    #     return None
-
     def find_oda_converter(self):
         # Explicit path passed to DWGReader(oda_path=...)
         if self.oda_path and Path(self.oda_path).exists():
@@ -537,10 +515,16 @@ class DWGReader:
 
     def detect_doors(self):
         """Detect doors inserted as block references (INSERT entities)
-        whose block name matches a known door keyword. If this returns
-        an empty list, doors in this drawing are likely raw geometry
-        (arc + line swing) rather than blocks, and need a different
-        detection strategy."""
+        whose block name matches a known door keyword, and pull the
+        block's actual line/arc geometry (leaf + swing arc) so the
+        frontend can draw the real door symbol instead of just a dot
+        at its insertion point.
+
+        If this returns doors with an empty "geometry" list, the door
+        block in this drawing contains entity types not yet handled by
+        entity_to_draw_data() (e.g. SPLINE/ELLIPSE) — the frontend can
+        fall back to drawing a simple rectangle using "width" and
+        "rotation" in that case."""
         doors = []
 
         for entity in self.entities:
@@ -553,11 +537,45 @@ class DWGReader:
                     continue
 
                 insert = entity.dxf.insert
+
+                # Explode the block into its real geometry (door leaf
+                # line + swing arc, usually) instead of just recording
+                # the insertion point.
+                geometry = []
+                try:
+                    for sub_entity in entity.virtual_entities():
+                        sub_data = self.entity_to_draw_data(sub_entity)
+                        if sub_data:
+                            geometry.append(sub_data)
+                except Exception:
+                    geometry = []
+
+                # Fallback width estimate from the exploded geometry's
+                # bounding box, in case the frontend wants to draw a
+                # simple placeholder rectangle for door blocks whose
+                # geometry didn't come through cleanly.
+                width = None
+                xs, ys = [], []
+                for item in geometry:
+                    if item["type"] == "LINE":
+                        xs.extend([item["start"][0], item["end"][0]])
+                        ys.extend([item["start"][1], item["end"][1]])
+                    elif item["type"] == "POLYLINE":
+                        xs.extend(p[0] for p in item["points"])
+                        ys.extend(p[1] for p in item["points"])
+                    elif item["type"] in ("ARC", "CIRCLE"):
+                        xs.append(item["center"][0])
+                        ys.append(item["center"][1])
+                if xs and ys:
+                    width = round(max(max(xs) - min(xs), max(ys) - min(ys)), 4)
+
                 doors.append({
                     "block_name": entity.dxf.name,
                     "layer": entity.dxf.layer,
                     "position": [float(insert.x), float(insert.y)],
                     "rotation": float(getattr(entity.dxf, "rotation", 0.0)),
+                    "width": width,
+                    "geometry": geometry,
                 })
             except Exception:
                 continue
@@ -623,8 +641,15 @@ class DWGReader:
 
         Returns (labeled_rooms, used_ids, unmatched_labels). A label
         ends up in unmatched_labels when no closed candidate contains
-        its position at all — usually a gap in the wall geometry near
-        that label."""
+        its position at all (usually a gap in the wall geometry near
+        that label), OR when every candidate containing it is already
+        claimed by another label — e.g. an open-plan KITCHEN/DINING/
+        LIVING area with no interior wall separating them all sits
+        inside one shared outer boundary. We deliberately do NOT fall
+        back to reusing an already-claimed candidate here: doing so
+        would create multiple room objects with identical geometry
+        (and therefore identical centroids), which renders as stacked,
+        overlapping labels in the UI."""
         used_ids = set()
         labeled_rooms = []
         unmatched_labels = []
@@ -642,10 +667,12 @@ class DWGReader:
             containing.sort(key=lambda c: c["area"])
             chosen = next((c for c in containing if c["id"] not in used_ids), None)
             if chosen is None:
-                # Every candidate here is already claimed by another
-                # label (nested labels sharing a container) — reuse the
-                # smallest rather than silently dropping this label.
-                chosen = containing[0]
+                # Every containing candidate is already claimed by
+                # another label. Don't fabricate a duplicate room that
+                # reuses the same boundary/centroid — surface it as
+                # unmatched instead.
+                unmatched_labels.append(label)
+                continue
 
             used_ids.add(chosen["id"])
 
@@ -940,6 +967,58 @@ class DWGReader:
                     ],
                     "layer": entity.dxf.layer,
                 }
+            return None
+
+        if entity_type == "ARC":
+            try:
+                center = entity.dxf.center
+                return {
+                    "type": "ARC",
+                    "center": [float(center.x), float(center.y)],
+                    "radius": float(entity.dxf.radius),
+                    "start_angle": float(entity.dxf.start_angle),
+                    "end_angle": float(entity.dxf.end_angle),
+                    "layer": entity.dxf.layer,
+                }
+            except Exception:
+                return None
+
+        if entity_type == "CIRCLE":
+            try:
+                center = entity.dxf.center
+                return {
+                    "type": "CIRCLE",
+                    "center": [float(center.x), float(center.y)],
+                    "radius": float(entity.dxf.radius),
+                    "layer": entity.dxf.layer,
+                }
+            except Exception:
+                return None
+
+        if entity_type == "INSERT":
+            # Furniture, fixtures, doors, and most stair symbols are
+            # block references, not raw geometry. Explode the block
+            # (and any nested blocks inside it — virtual_entities()
+            # recurses) into its real LINE/ARC/CIRCLE/POLYLINE
+            # sub-entities so it actually renders instead of vanishing.
+            try:
+                sub_entities = []
+                for sub_entity in entity.virtual_entities():
+                    sub_data = self.entity_to_draw_data(sub_entity)
+                    if sub_data:
+                        sub_entities.append(sub_data)
+
+                if not sub_entities:
+                    return None
+
+                return {
+                    "type": "BLOCK",
+                    "block_name": entity.dxf.name,
+                    "layer": entity.dxf.layer,
+                    "entities": sub_entities,
+                }
+            except Exception:
+                return None
 
         return None
 
