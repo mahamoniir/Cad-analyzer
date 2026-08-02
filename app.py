@@ -39,7 +39,7 @@ from flask import Flask, render_template
 
 from cad_routes import register_cad_routes
 
-app = Flask(__name__, template_folder="template")
+app = Flask(__name__)
 
 register_cad_routes(app)
 
