@@ -21,6 +21,7 @@
     --blue-fill:rgba(90,160,255,0.14);
     --green:#3ddc84;
     --amber:#ffc328;
+    --cyan:#3ddce0;
     --radius:6px;
   }
   *{box-sizing:border-box;}
@@ -270,6 +271,7 @@
         <div class="legend" id="legend" style="display:none;">
           <div class="legend-item"><span class="swatch" style="background:var(--blue);"></span>Room</div>
           <div class="legend-item"><span class="swatch" style="background:var(--green);"></span>Door</div>
+          <div class="legend-item"><span class="swatch" style="background:var(--cyan);"></span>Furniture</div>
           <div class="legend-item"><span class="swatch" style="background:var(--amber);"></span>Wall (selected)</div>
         </div>
       </div>
@@ -534,16 +536,38 @@
   }
   window.addEventListener("resize", () => { resizeCanvasToWrap(); draw(); });
 
+  // ---- recursively gather every point an entity (incl. nested BLOCK
+  // sub-entities and ARC extents) could occupy, for bounding-box fit ----
+  function collectEntityPoints(en, pts){
+    if (!en) return;
+    if (en.type === "LINE"){
+      pts.push(en.start, en.end);
+    } else if (en.type === "POLYLINE"){
+      pts.push(...en.points);
+    } else if (en.type === "CIRCLE"){
+      pts.push(
+        [en.center[0]-en.radius, en.center[1]-en.radius],
+        [en.center[0]+en.radius, en.center[1]+en.radius]
+      );
+    } else if (en.type === "ARC"){
+      pts.push(
+        [en.center[0]-en.radius, en.center[1]-en.radius],
+        [en.center[0]+en.radius, en.center[1]+en.radius]
+      );
+    } else if (en.type === "BLOCK"){
+      (en.entities||[]).forEach(sub => collectEntityPoints(sub, pts));
+    }
+  }
+
   function collectPoints(){
     const pts = [];
     if (!state.drawData) return pts;
-    for (const en of state.drawData.entities){
-      if (!en) continue;
-      if (en.type === "LINE"){ pts.push(en.start, en.end); }
-      else if (en.type === "POLYLINE"){ pts.push(...en.points); }
-    }
+    for (const en of state.drawData.entities) collectEntityPoints(en, pts);
     for (const room of state.drawData.rooms) pts.push(...room.points);
-    for (const door of state.drawData.doors) pts.push(door.position);
+    for (const door of state.drawData.doors){
+      pts.push(door.position);
+      (door.geometry||[]).forEach(en => collectEntityPoints(en, pts));
+    }
     return pts;
   }
 
@@ -588,6 +612,75 @@
   }
 
   // =========================================================
+  // ARC SAMPLING
+  // =========================================================
+  // DXF arc angles are degrees, counterclockwise from +X, in WORLD
+  // space (Y up). Sampling into world-space points first and running
+  // them through worldToScreen (which already flips Y) avoids having
+  // to reason about canvas's clockwise/Y-down arc() convention.
+  function arcToWorldPoints(center, radius, startAngleDeg, endAngleDeg, segments){
+    segments = segments || 24;
+    let start = startAngleDeg * Math.PI / 180;
+    let end = endAngleDeg * Math.PI / 180;
+    if (end <= start) end += Math.PI * 2;
+    const pts = [];
+    for (let i = 0; i <= segments; i++){
+      const t = start + (end - start) * (i / segments);
+      pts.push([center[0] + radius * Math.cos(t), center[1] + radius * Math.sin(t)]);
+    }
+    return pts;
+  }
+
+  // =========================================================
+  // GENERIC ENTITY DRAWING  (LINE / POLYLINE / ARC / CIRCLE / BLOCK)
+  // =========================================================
+  // Used for both the background wall/furniture layer and door
+  // geometry, so blocks (furniture, door leaves) render identically
+  // wherever they appear.
+  function strokeEntity(en, color, lineWidth){
+    if (!en) return;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+
+    if (en.type === "LINE"){
+      const [x1,y1] = worldToScreen(en.start);
+      const [x2,y2] = worldToScreen(en.end);
+      ctx.beginPath();
+      ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      ctx.stroke();
+
+    } else if (en.type === "POLYLINE"){
+      ctx.beginPath();
+      en.points.forEach((p,i) => {
+        const [x,y] = worldToScreen(p);
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+
+    } else if (en.type === "CIRCLE"){
+      const [cx,cy] = worldToScreen(en.center);
+      const r = en.radius * state.transform.scale;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.stroke();
+
+    } else if (en.type === "ARC"){
+      const worldPts = arcToWorldPoints(en.center, en.radius, en.start_angle, en.end_angle);
+      ctx.beginPath();
+      worldPts.forEach((p,i) => {
+        const [x,y] = worldToScreen(p);
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+
+    } else if (en.type === "BLOCK"){
+      // Furniture/door blocks — draw every sub-entity with the same
+      // color/weight so the whole block reads as one object.
+      (en.entities||[]).forEach(sub => strokeEntity(sub, color, lineWidth));
+    }
+  }
+
+  // =========================================================
   // DRAW
   // =========================================================
   function draw(){
@@ -607,20 +700,18 @@
     state.drawData.entities.forEach((en, idx) => {
       if (!en) return;
       const selected = idx === state.selectedWallIndex;
-      ctx.strokeStyle = selected ? "#ffc328" : "rgba(90,90,90,0.55)";
-      ctx.lineWidth = selected ? 2.5 : 1;
-      ctx.beginPath();
-      if (en.type === "LINE"){
-        const [x1,y1] = worldToScreen(en.start);
-        const [x2,y2] = worldToScreen(en.end);
-        ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
-      } else if (en.type === "POLYLINE"){
-        en.points.forEach((p,i) => {
-          const [x,y] = worldToScreen(p);
-          if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-        });
+
+      if (en.type === "BLOCK"){
+        // Furniture/fixture block — distinct cyan so it reads apart
+        // from the wall/room geometry, matching the source DWG's
+        // furniture-layer accent color.
+        const color = selected ? "#ffc328" : "rgba(61,220,224,0.65)";
+        strokeEntity(en, color, selected ? 2.5 : 1);
+        return;
       }
-      ctx.stroke();
+
+      const color = selected ? "#ffc328" : "rgba(90,90,90,0.55)";
+      strokeEntity(en, color, selected ? 2.5 : 1);
     });
   }
 
@@ -675,11 +766,45 @@
     const baseRadius = Math.max(4, Math.min(8, state.transform.scale * 0.15));
     state.drawData.doors.forEach((door, idx) => {
       const selected = idx === state.selectedDoorIndex;
-      const r = selected ? baseRadius * 1.6 : baseRadius;
-      const [x,y] = worldToScreen(door.position);
+      const color = selected ? "#eb1b26" : "#3ddc84";
+      const lineWidth = selected ? 2.5 : 1.5;
+
+      if (door.geometry && door.geometry.length){
+        // Real door leaf + swing arc, exploded server-side from the
+        // block's actual geometry.
+        door.geometry.forEach(item => strokeEntity(item, color, lineWidth));
+
+      } else if (door.width){
+        // No usable exploded geometry (block contained an entity type
+        // we don't parse yet) — draw a simple oriented rectangle as a
+        // placeholder using the block's bounding-box width.
+        const [x,y] = worldToScreen(door.position);
+        const halfW = (door.width/2) * state.transform.scale;
+        const rot = -((door.rotation||0) * Math.PI/180); // screen Y is flipped vs world Y
+        ctx.save();
+        ctx.translate(x,y);
+        ctx.rotate(rot);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.strokeRect(-halfW, -2, halfW*2, 4);
+        ctx.restore();
+
+      } else {
+        // Last-resort fallback: no geometry, no width — just a marker.
+        const [x,y] = worldToScreen(door.position);
+        ctx.beginPath();
+        ctx.arc(x, y, selected ? baseRadius*1.6 : baseRadius, 0, Math.PI*2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+
+      // Small anchor dot at the insertion point regardless of which
+      // branch above ran — keeps click targeting consistent and gives
+      // a visible handle even when the geometry is a thin line.
+      const [ax,ay] = worldToScreen(door.position);
       ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI*2);
-      ctx.fillStyle = selected ? "#eb1b26" : "#3ddc84";
+      ctx.arc(ax, ay, selected ? 3.5 : 2.5, 0, Math.PI*2);
+      ctx.fillStyle = color;
       ctx.fill();
     });
   }
@@ -779,7 +904,8 @@
     el("detailsBar").innerHTML =
       "Door — block: <b>" + (door.block_name || "UNKNOWN") + "</b> | layer: " + door.layer +
       " | position: (" + door.position[0].toFixed(3) + ", " + door.position[1].toFixed(3) + ")" +
-      " | rotation: " + (door.rotation ?? 0).toFixed(1) + "°";
+      " | rotation: " + (door.rotation ?? 0).toFixed(1) + "°" +
+      (door.width ? " | width: " + door.width.toFixed(2) + " m" : "");
     draw();
   }
 
