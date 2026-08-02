@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import tempfile
 from collections import Counter
-
+import os
 import ezdxf
 from ezdxf import edgeminer
 
