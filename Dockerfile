@@ -77,4 +77,4 @@ COPY . .
 
 # Railway sets $PORT at runtime
 ENV PORT=8080
-CMD gunicorn -w 2 -b 0.0.0.0:${PORT} --timeout 300 app:app
+CMD gunicorn -w 2 -b 0.0.0.0:${PORT} --timeout 300 main:app
