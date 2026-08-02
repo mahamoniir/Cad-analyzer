@@ -1,0 +1,4 @@
+# Don't commit the ODA installer — the Dockerfile downloads it at build time
+deploy/*.deb
+deploy/*.rpm
+deploy/*.AppImage
