@@ -64,6 +64,8 @@ RUN wget -q -O /tmp/ODAFileConverter.deb "$ODA_DEB_URL" \
 # IMPORTANT — verify this path matches the installed package.
 # ------------------------------------------------------------
 ENV ODA_REAL_BIN=/usr/bin/ODAFileConverter
+ENV LUXSCALE_ODA_PATH=/usr/local/bin/ODAFileConverter
+# ENV ODA_REAL_BIN=/usr/bin/ODAFileConverter
 
 # Headless wrapper: shadows the real "ODAFileConverter" command on PATH
 # (/usr/local/bin comes before /usr/bin in the default PATH) so ezdxf's
