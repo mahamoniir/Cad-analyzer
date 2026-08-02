@@ -100,25 +100,43 @@ class DWGReader:
     # FIND ODA
     # =========================================================
 
-    def find_oda_converter(self):
-        possible_paths = [
-            self.oda_path,
-            r"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe",
-            r"C:\Program Files\ODA\ODAFileConverter 26.5.0\ODAFileConverter.exe",
-            r"C:\Program Files\ODA\ODAFileConverter 26.6.0\ODAFileConverter.exe",
-            r"C:\Program Files\ODA\ODAFileConverter 27.0.0\ODAFileConverter.exe",
-            r"C:\Program Files (x86)\ODA\ODAFileConverter\ODAFileConverter.exe",
-            r"C:\Program Files (x86)\ODA\ODAFileConverter 26.5.0\ODAFileConverter.exe",
-            r"C:\Program Files (x86)\ODA\ODAFileConverter 26.6.0\ODAFileConverter.exe",
-            r"C:\Program Files\ODA\ODAFileConverter 27.1.0\ODAFileConverter.exe",
-        ]
+    # def find_oda_converter(self):
+    #     possible_paths = [
+    #         self.oda_path,
+    #         r"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe",
+    #         r"C:\Program Files\ODA\ODAFileConverter 26.5.0\ODAFileConverter.exe",
+    #         r"C:\Program Files\ODA\ODAFileConverter 26.6.0\ODAFileConverter.exe",
+    #         r"C:\Program Files\ODA\ODAFileConverter 27.0.0\ODAFileConverter.exe",
+    #         r"C:\Program Files (x86)\ODA\ODAFileConverter\ODAFileConverter.exe",
+    #         r"C:\Program Files (x86)\ODA\ODAFileConverter 26.5.0\ODAFileConverter.exe",
+    #         r"C:\Program Files (x86)\ODA\ODAFileConverter 26.6.0\ODAFileConverter.exe",
+    #         r"C:\Program Files\ODA\ODAFileConverter 27.1.0\ODAFileConverter.exe",
+    #     ]
 
-        for path in possible_paths:
-            if not path:
-                continue
-            path = Path(path)
-            if path.exists():
-                return str(path)
+    #     for path in possible_paths:
+    #         if not path:
+    #             continue
+    #         path = Path(path)
+    #         if path.exists():
+    #             return str(path)
+
+    #     return None
+
+    def find_oda_converter(self):
+        # Explicit path passed to DWGReader(oda_path=...)
+        if self.oda_path and Path(self.oda_path).exists():
+            return str(self.oda_path)
+
+        # Env var set in the Dockerfile (points at the real Linux binary)
+        env_path = os.environ.get("ODA_REAL_BIN")
+        if env_path and Path(env_path).exists():
+            return env_path
+
+        # Resolve via PATH — finds /usr/local/bin/ODAFileConverter
+        # (the xvfb wrapper) since it precedes /usr/bin in PATH.
+        which_result = shutil.which("ODAFileConverter")
+        if which_result:
+            return which_result
 
         return None
 
