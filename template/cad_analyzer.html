@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAD Lighting Analyzer — Short Circuit Company</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --void:#0b0d0f;
+    --surface:#14171a;
+    --surface-raised:#1b1f23;
+    --line:#282e34;
+    --text:#e8eaed;
+    --text-dim:#8b9199;
+    --text-faint:#565c63;
+    --red:#eb1b26;
+    --red-dim:#5c2226;
+    --blue:#5aa0ff;
+    --blue-fill:rgba(90,160,255,0.14);
+    --green:#3ddc84;
+    --amber:#ffc328;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--void);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    font-size:14px;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--red-dim);color:#fff;}
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:var(--surface);}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:5px;}
+
+  .app{display:flex;flex-direction:column;height:100vh;}
+
+  /* ===== HEADER / INSTRUMENT STRIP ===== */
+  header{
+    display:flex;align-items:center;gap:24px;
+    padding:14px 20px;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+    flex-shrink:0;
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .mark{width:10px;height:22px;background:var(--red);border-radius:2px;flex-shrink:0;}
+  .brand-text{display:flex;flex-direction:column;line-height:1.1;}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;color:var(--text-faint);text-transform:uppercase;}
+  h1{font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:600;margin:0;letter-spacing:-.01em;}
+
+  .readout-strip{display:flex;gap:0;margin-left:auto;font-family:'JetBrains Mono',monospace;}
+  .readout{padding:0 18px;border-left:1px solid var(--line);text-align:right;}
+  .readout:first-child{border-left:none;}
+  .readout .val{font-size:18px;font-weight:600;color:var(--text);}
+  .readout .lbl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);}
+
+  .apibase{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);}
+  .apibase input{
+    background:var(--void);border:1px solid var(--line);color:var(--text-dim);
+    font-family:inherit;font-size:11px;padding:5px 8px;border-radius:4px;width:150px;
+  }
+  .apibase input:focus{outline:none;border-color:var(--blue);color:var(--text);}
+
+  /* ===== LAYOUT ===== */
+  .body{display:flex;flex:1;min-height:0;}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--line);}
+  .sidebar{width:380px;flex-shrink:0;display:flex;flex-direction:column;background:var(--surface);overflow-y:auto;}
+
+  /* ===== UPLOAD / TOOLBAR ===== */
+  .toolbar{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface);flex-shrink:0;}
+  .btn{
+    font-family:'Inter',sans-serif;font-size:13px;font-weight:500;
+    padding:8px 14px;border-radius:4px;border:1px solid var(--line);
+    background:var(--surface-raised);color:var(--text);cursor:pointer;
+    transition:border-color .15s, background .15s;
+  }
+  .btn:hover{border-color:var(--text-faint);}
+  .btn:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-primary{background:var(--red);border-color:var(--red);color:#fff;font-weight:600;}
+  .btn-primary:hover{background:#ff2530;border-color:#ff2530;}
+  .btn-primary:disabled{background:var(--red-dim);border-color:var(--red-dim);}
+  .filename{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  #fileInput{display:none;}
+
+  .toolbar .spacer{flex:1;}
+  .zoom-controls{display:flex;gap:4px;}
+  .zoom-controls .btn{padding:6px 10px;}
+
+  /* ===== DROP ZONE ===== */
+  .dropzone{
+    flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;
+    border:1.5px dashed var(--line);margin:16px;border-radius:8px;
+    color:var(--text-faint);cursor:pointer;transition:border-color .15s, color .15s;
+  }
+  .dropzone.drag{border-color:var(--blue);color:var(--blue);background:var(--blue-fill);}
+  .dropzone svg{opacity:.5;}
+  .dropzone .dz-title{font-family:'Space Grotesk',sans-serif;font-size:15px;color:var(--text-dim);}
+  .dropzone .dz-sub{font-family:'JetBrains Mono',monospace;font-size:11px;}
+
+  /* ===== CANVAS ===== */
+  .canvas-wrap{flex:1;position:relative;min-height:0;background:
+    linear-gradient(var(--void),var(--void));
+  }
+  canvas{display:block;width:100%;height:100%;cursor:grab;}
+  canvas.panning{cursor:grabbing;}
+  .canvas-empty{display:none;}
+
+  .legend{
+    position:absolute;bottom:12px;left:12px;display:flex;gap:14px;
+    background:rgba(20,23,26,0.85);border:1px solid var(--line);border-radius:6px;
+    padding:8px 12px;backdrop-filter:blur(4px);
+  }
+  .legend-item{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text-dim);}
+  .swatch{width:9px;height:9px;border-radius:2px;}
+
+  /* ===== OBJECT DETAILS BAR ===== */
+  .details-bar{
+    padding:10px 16px;border-top:1px solid var(--line);background:var(--surface);
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-dim);
+    min-height:16px;flex-shrink:0;
+  }
+  .details-bar b{color:var(--text);font-weight:600;}
+
+  /* ===== SIDEBAR SECTIONS ===== */
+  .section{padding:16px;border-bottom:1px solid var(--line);}
+  .section-title{
+    font-family:'Space Grotesk',sans-serif;font-size:11px;font-weight:600;
+    letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin:0 0 12px;
+  }
+
+  .empty-note{font-size:12.5px;color:var(--text-faint);line-height:1.5;}
+
+  .room-card{
+    background:var(--surface-raised);border:1px solid var(--line);border-radius:6px;
+    padding:12px;margin-bottom:14px;
+  }
+  .room-card .room-name{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600;margin-bottom:2px;}
+  .room-card .room-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-faint);margin-bottom:10px;}
+  .metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;}
+  .metric{display:flex;flex-direction:column;}
+  .metric .m-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);}
+  .metric .m-val{font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text);}
+  .sides-row{margin-top:10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);word-break:break-all;}
+
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:11px;color:var(--text-dim);margin-bottom:5px;}
+  .field select,.field input{
+    width:100%;background:var(--void);border:1px solid var(--line);color:var(--text);
+    font-family:'Inter',sans-serif;font-size:13px;padding:8px 10px;border-radius:4px;
+  }
+  .field select:focus,.field input:focus{outline:none;border-color:var(--blue);}
+  .field-row{display:flex;gap:10px;}
+  .field-row .field{flex:1;}
+
+  .place-readout{
+    display:flex;gap:14px;font-family:'JetBrains Mono',monospace;font-size:11.5px;
+    color:var(--text-dim);margin-top:8px;flex-wrap:wrap;
+  }
+  .place-readout span b{color:var(--text);}
+
+  .room-list{max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:6px;}
+  .room-row{
+    display:flex;justify-content:space-between;padding:8px 10px;font-size:12.5px;
+    border-bottom:1px solid var(--line);cursor:pointer;transition:background .1s;
+  }
+  .room-row:last-child{border-bottom:none;}
+  .room-row:hover{background:var(--surface-raised);}
+  .room-row.active{background:var(--red-dim);}
+  .room-row .r-name{font-weight:500;}
+  .room-row .r-area{font-family:'JetBrains Mono',monospace;color:var(--text-dim);}
+
+  /* ===== RESULTS ===== */
+  .result-status{
+    display:inline-flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;
+    font-size:11px;padding:4px 9px;border-radius:12px;margin-bottom:12px;
+  }
+  .result-status.success{background:rgba(61,220,132,0.12);color:var(--green);}
+  .result-status.error{background:rgba(235,27,38,0.12);color:var(--red);}
+
+  .option-row{
+    padding:10px;border:1px solid var(--line);border-radius:6px;margin-bottom:8px;cursor:pointer;
+    transition:border-color .12s;
+  }
+  .option-row:hover{border-color:var(--text-faint);}
+  .option-row.selected{border-color:var(--blue);}
+  .option-row.compliant{border-left:3px solid var(--green);}
+  .option-row.noncompliant{border-left:3px solid var(--red);}
+  .opt-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+  .opt-top .opt-lum{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:600;}
+  .opt-top .opt-status{font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
+  .opt-top .opt-status.c{color:var(--green);}
+  .opt-top .opt-status.n{color:var(--red);}
+  .opt-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px 10px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);}
+  .opt-grid b{color:var(--text);font-weight:600;}
+
+  .option-detail{
+    margin-top:10px;padding:12px;background:var(--void);border:1px solid var(--line);border-radius:6px;
+    font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height:1.7;color:var(--text-dim);
+    white-space:pre-wrap;
+  }
+
+  .spin{
+    width:14px;height:14px;border:2px solid var(--line);border-top-color:var(--red);
+    border-radius:50%;animation:sp .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px;
+  }
+  @keyframes sp{to{transform:rotate(360deg);}}
+
+  .toast{
+    position:fixed;bottom:20px;right:20px;background:var(--surface-raised);border:1px solid var(--line);
+    border-left:3px solid var(--red);padding:12px 16px;border-radius:6px;font-size:12.5px;max-width:340px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.4);z-index:100;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <div class="mark"></div>
+      <div class="brand-text">
+        <div class="eyebrow">Short Circuit Company</div>
+        <h1>CAD Lighting Analyzer</h1>
+      </div>
+    </div>
+
+    <div class="readout-strip" id="readoutStrip">
+      <div class="readout"><div class="val" id="roLayers">–</div><div class="lbl">Layers</div></div>
+      <div class="readout"><div class="val" id="roEntities">–</div><div class="lbl">Entities</div></div>
+      <div class="readout"><div class="val" id="roRooms">–</div><div class="lbl">Rooms</div></div>
+      <div class="readout"><div class="val" id="roDoors">–</div><div class="lbl">Doors</div></div>
+      <div class="readout"><div class="val" id="roUnmatched">–</div><div class="lbl">Unmatched</div></div>
+    </div>
+
+    <div class="apibase">
+      API base
+      <input id="apiBaseInput" type="text" placeholder="http://127.0.0.1:5000" />
+    </div>
+  </header>
+
+  <div class="body">
+    <div class="main">
+      <div class="toolbar">
+        <button class="btn btn-primary" id="selectFileBtn">Select CAD file</button>
+        <input type="file" id="fileInput" accept=".dwg,.dxf" />
+        <span class="filename" id="filenameLabel">No file selected</span>
+        <div class="spacer"></div>
+        <div class="zoom-controls">
+          <button class="btn" id="zoomFitBtn" title="Fit to view">Fit</button>
+          <button class="btn" id="zoomInBtn" title="Zoom in">+</button>
+          <button class="btn" id="zoomOutBtn" title="Zoom out">–</button>
+        </div>
+      </div>
+
+      <div class="canvas-wrap" id="canvasWrap">
+        <div class="dropzone" id="dropzone">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+            <path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/>
+          </svg>
+          <div class="dz-title">Drop a DWG or DXF file, or click to browse</div>
+          <div class="dz-sub">.dwg · .dxf — parsed server-side via /api/cad/upload</div>
+        </div>
+        <canvas id="cadCanvas" style="display:none;"></canvas>
+        <div class="legend" id="legend" style="display:none;">
+          <div class="legend-item"><span class="swatch" style="background:var(--blue);"></span>Room</div>
+          <div class="legend-item"><span class="swatch" style="background:var(--green);"></span>Door</div>
+          <div class="legend-item"><span class="swatch" style="background:var(--amber);"></span>Wall (selected)</div>
+        </div>
+      </div>
+
+      <div class="details-bar" id="detailsBar">Click a room, door, or wall in the drawing — or a row in the sidebar — to see its details.</div>
+    </div>
+
+    <div class="sidebar">
+      <div class="section" id="roomTypeSection" style="display:none;">
+        <div class="section-title">Calculation setup</div>
+
+        <div class="field">
+          <label>Room type</label>
+          <select id="placeSelect"></select>
+        </div>
+
+        <div class="place-readout" id="placeReadout"></div>
+
+        <div class="field-row" style="margin-top:14px;">
+          <div class="field">
+            <label>Ceiling height (m)</label>
+            <input type="number" id="heightInput" value="3.2" min="0.1" step="0.1" />
+          </div>
+          <div class="field">
+            <label>Standard reference</label>
+            <input type="text" id="standardRefInput" placeholder="e.g. 5.2.1" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Project name</label>
+          <input type="text" id="projectNameInput" value="CAD Lighting Analysis" />
+        </div>
+
+        <button class="btn btn-primary" id="calculateBtn" style="width:100%;" disabled>Calculate lighting</button>
+      </div>
+
+      <div class="section" id="roomSection">
+        <div class="section-title">Selected room</div>
+        <div id="roomSectionBody"><div class="empty-note">No room selected.</div></div>
+      </div>
+
+      <div class="section" id="roomListSection" style="display:none;">
+        <div class="section-title">Detected rooms</div>
+        <div class="room-list" id="roomList"></div>
+      </div>
+
+      <div class="section" id="resultsSection" style="display:none;">
+        <div class="section-title">Calculation result</div>
+        <div id="resultsBody"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // =========================================================
+  // STATE
+  // =========================================================
+  const state = {
+    apiBase: localStorage.getItem("luxscale_api_base") || "",
+    sessionId: null,
+    drawData: null,       // { layers, rooms, doors, entities, unmatched_labels }
+    places: {},            // key -> place object
+    categoryKeywords: {},
+    selectedRoomId: null,
+    selectedDoorIndex: null,
+    selectedWallIndex: null,
+    transform: null,        // {minX, maxY, scale, margin}
+    view: { offsetX: 0, offsetY: 0, zoom: 1 },
+    dragging: false,
+    dragStart: null,
+    lastResult: null,
+    normalizedOptions: [],
+    selectedOptionIndex: null,
+  };
+
+  // =========================================================
+  // DOM
+  // =========================================================
+  const el = (id) => document.getElementById(id);
+  const canvas = el("cadCanvas");
+  const ctx = canvas.getContext("2d");
+  const dropzone = el("dropzone");
+  const fileInput = el("fileInput");
+  const canvasWrap = el("canvasWrap");
+
+  el("apiBaseInput").value = state.apiBase;
+  el("apiBaseInput").addEventListener("change", (e) => {
+    state.apiBase = e.target.value.trim().replace(/\/$/, "");
+    localStorage.setItem("luxscale_api_base", state.apiBase);
+  });
+
+  function apiUrl(path){ return state.apiBase + path; }
+
+  function toast(message){
+    const t = document.createElement("div");
+    t.className = "toast";
+    t.textContent = message;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 6000);
+  }
+
+  // =========================================================
+  // UPLOAD FLOW
+  // =========================================================
+  el("selectFileBtn").addEventListener("click", () => fileInput.click());
+  dropzone.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", (e) => {
+    if (e.target.files[0]) uploadFile(e.target.files[0]);
+  });
+
+  ["dragenter","dragover"].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.add("drag"); })
+  );
+  ["dragleave","drop"].forEach(evt =>
+    dropzone.addEventListener(evt, (e) => { e.preventDefault(); dropzone.classList.remove("drag"); })
+  );
+  dropzone.addEventListener("drop", (e) => {
+    const file = e.dataTransfer.files[0];
+    if (file) uploadFile(file);
+  });
+
+  async function uploadFile(file){
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["dwg","dxf"].includes(ext)){
+      toast("Unsupported file type '." + ext + "'. Only .dwg and .dxf are accepted.");
+      return;
+    }
+
+    el("filenameLabel").textContent = file.name;
+    el("selectFileBtn").disabled = true;
+    el("selectFileBtn").textContent = "Uploading…";
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch(apiUrl("/api/cad/upload"), { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok || data.status !== "success"){
+        throw new Error(data.message || ("Upload failed (" + res.status + ")"));
+      }
+      state.sessionId = data.session_id;
+      updateReadouts(data.summary);
+      await loadDrawData();
+      await loadPlaces();
+    } catch (err) {
+      toast("Upload error: " + err.message);
+    } finally {
+      el("selectFileBtn").disabled = false;
+      el("selectFileBtn").textContent = "Select CAD file";
+    }
+  }
+
+  function updateReadouts(summary){
+    el("roLayers").textContent = summary.layers ?? "–";
+    el("roEntities").textContent = summary.entities ?? "–";
+    el("roRooms").textContent = summary.rooms ?? "–";
+    el("roDoors").textContent = summary.doors ?? "–";
+    el("roUnmatched").textContent = summary.unmatched_labels ?? "–";
+  }
+
+  async function loadDrawData(){
+    const res = await fetch(apiUrl("/api/cad/draw-data/" + state.sessionId));
+    const data = await res.json();
+    if (!res.ok || data.status !== "success"){
+      throw new Error(data.message || "Could not load drawing data.");
+    }
+    state.drawData = data.draw_data;
+
+    dropzone.style.display = "none";
+    canvas.style.display = "block";
+    el("legend").style.display = "flex";
+    el("roomListSection").style.display = "block";
+    el("roomTypeSection").style.display = "block";
+
+    fitView();
+    renderRoomList();
+    resizeCanvasToWrap();
+    draw();
+
+    if (state.drawData.unmatched_labels && state.drawData.unmatched_labels.length){
+      toast(state.drawData.unmatched_labels.length + " text label(s) found with no matching room boundary — likely a gap in the wall geometry near that label.");
+    }
+  }
+
+  // =========================================================
+  // PLACES (/places) — room type dropdown
+  // =========================================================
+  async function loadPlaces(){
+    try {
+      const res = await fetch(apiUrl("/api/cad/places"));
+      const data = await res.json();
+      const select = el("placeSelect");
+      select.innerHTML = "";
+      state.places = {};
+
+      (data.calculator_places || []).forEach((place) => {
+        if (!place.key) return;
+        state.places[place.key] = place;
+        const opt = document.createElement("option");
+        opt.value = place.key;
+        opt.textContent = place.key;
+        select.appendChild(opt);
+      });
+
+      state.categoryKeywords = data.category_keywords || {};
+      select.onchange = () => onPlaceChanged(select.value);
+      if (select.value) onPlaceChanged(select.value);
+    } catch (err) {
+      toast("Could not load room types from /places: " + err.message);
+    }
+  }
+
+  function findCategory(placeName){
+    const search = (placeName || "").toLowerCase();
+    for (const [category, keywords] of Object.entries(state.categoryKeywords)){
+      if (search.includes(category.toLowerCase())) return category;
+      for (const kw of keywords){
+        if (search.includes(String(kw).toLowerCase())) return category;
+      }
+    }
+    return "No category matched";
+  }
+
+  function getPlaceDefaultStandardRef(placeName){
+    const place = state.places[placeName] || {};
+    for (const key of ["standard_ref_no","standard_ref","default_standard_ref_no","reference","ref_no"]){
+      if (place[key]) return String(place[key]).trim();
+    }
+    return "";
+  }
+
+  function onPlaceChanged(placeName){
+    const place = state.places[placeName] || {};
+    const category = findCategory(placeName);
+    el("placeReadout").innerHTML =
+      "<span>Lux: <b>" + (place.lux ?? "–") + "</b></span>" +
+      "<span>Uniformity: <b>" + (place.uniformity ?? "–") + "</b></span>" +
+      "<span>Category: <b>" + category + "</b></span>";
+
+    const refInput = el("standardRefInput");
+    if (!refInput.value.trim()){
+      const def = getPlaceDefaultStandardRef(placeName);
+      if (def) refInput.value = def;
+    }
+  }
+
+  // =========================================================
+  // CANVAS SIZING / TRANSFORM  (mirrors CADViewer.paintEvent)
+  // =========================================================
+  function resizeCanvasToWrap(){
+    const rect = canvasWrap.getBoundingClientRect();
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+  }
+  window.addEventListener("resize", () => { resizeCanvasToWrap(); draw(); });
+
+  function collectPoints(){
+    const pts = [];
+    if (!state.drawData) return pts;
+    for (const en of state.drawData.entities){
+      if (!en) continue;
+      if (en.type === "LINE"){ pts.push(en.start, en.end); }
+      else if (en.type === "POLYLINE"){ pts.push(...en.points); }
+    }
+    for (const room of state.drawData.rooms) pts.push(...room.points);
+    for (const door of state.drawData.doors) pts.push(door.position);
+    return pts;
+  }
+
+  function fitView(){
+    state.view = { offsetX: 0, offsetY: 0, zoom: 1 };
+  }
+
+  function computeBaseTransform(){
+    const pts = collectPoints();
+    if (!pts.length) { state.transform = null; return; }
+
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const w = Math.max(maxX - minX, 1);
+    const h = Math.max(maxY - minY, 1);
+
+    const margin = 50;
+    const cw = canvas.width / devicePixelRatio;
+    const ch = canvas.height / devicePixelRatio;
+
+    const baseScale = Math.min((cw - margin*2) / w, (ch - margin*2) / h);
+    const scale = baseScale * state.view.zoom;
+
+    state.transform = { minX, maxY, scale, margin, cw, ch };
+  }
+
+  function worldToScreen(p){
+    const t = state.transform;
+    if (!t) return p;
+    const x = (p[0] - t.minX) * t.scale + t.margin + state.view.offsetX;
+    const y = (t.maxY - p[1]) * t.scale + t.margin + state.view.offsetY;
+    return [x, y];
+  }
+
+  function screenToWorld(sp){
+    const t = state.transform;
+    if (!t) return null;
+    const x = (sp[0] - t.margin - state.view.offsetX) / t.scale + t.minX;
+    const y = t.maxY - (sp[1] - t.margin - state.view.offsetY) / t.scale;
+    return [x, y];
+  }
+
+  // =========================================================
+  // DRAW
+  // =========================================================
+  function draw(){
+    computeBaseTransform();
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    const cw = canvas.width / devicePixelRatio, ch = canvas.height / devicePixelRatio;
+    ctx.clearRect(0, 0, cw, ch);
+
+    if (!state.drawData || !state.transform) return;
+
+    drawBackgroundEntities();
+    drawRooms();
+    drawDoors();
+  }
+
+  function drawBackgroundEntities(){
+    state.drawData.entities.forEach((en, idx) => {
+      if (!en) return;
+      const selected = idx === state.selectedWallIndex;
+      ctx.strokeStyle = selected ? "#ffc328" : "rgba(90,90,90,0.55)";
+      ctx.lineWidth = selected ? 2.5 : 1;
+      ctx.beginPath();
+      if (en.type === "LINE"){
+        const [x1,y1] = worldToScreen(en.start);
+        const [x2,y2] = worldToScreen(en.end);
+        ctx.moveTo(x1,y1); ctx.lineTo(x2,y2);
+      } else if (en.type === "POLYLINE"){
+        en.points.forEach((p,i) => {
+          const [x,y] = worldToScreen(p);
+          if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        });
+      }
+      ctx.stroke();
+    });
+  }
+
+  function drawRooms(){
+    state.drawData.rooms.forEach(room => {
+      const selected = room.id === state.selectedRoomId;
+      const pts = room.points.map(worldToScreen);
+      ctx.beginPath();
+      pts.forEach(([x,y], i) => i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y));
+      ctx.closePath();
+      ctx.fillStyle = selected ? "rgba(235,27,38,0.28)" : "rgba(90,160,255,0.16)";
+      ctx.strokeStyle = selected ? "#eb1b26" : "rgba(90,160,255,0.75)";
+      ctx.lineWidth = selected ? 2 : 1.3;
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    // labels — simple centroid placement (no collision-avoidance spiral
+    // like the desktop viewer; fine for typical room counts)
+    ctx.font = "600 11px 'JetBrains Mono', monospace";
+    ctx.textAlign = "center";
+    state.drawData.rooms
+      .filter(r => (r.area || 0) >= 1.0)
+      .forEach(room => {
+        const [cx, cy] = worldToScreen(room.centroid);
+        const name = room.name || ("Room " + room.id);
+        const line2 = room.area + " m²";
+        const textW = Math.max(ctx.measureText(name).width, ctx.measureText(line2).width) + 16;
+
+        ctx.fillStyle = "rgba(10,10,10,0.72)";
+        roundRect(ctx, cx - textW/2, cy - 16, textW, 30, 4);
+        ctx.fill();
+
+        ctx.fillStyle = "#e8eaed";
+        ctx.fillText(name, cx, cy - 2);
+        ctx.fillStyle = "#8b9199";
+        ctx.fillText(line2, cx, cy + 11);
+      });
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  function drawDoors(){
+    const baseRadius = Math.max(4, Math.min(8, state.transform.scale * 0.15));
+    state.drawData.doors.forEach((door, idx) => {
+      const selected = idx === state.selectedDoorIndex;
+      const r = selected ? baseRadius * 1.6 : baseRadius;
+      const [x,y] = worldToScreen(door.position);
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI*2);
+      ctx.fillStyle = selected ? "#eb1b26" : "#3ddc84";
+      ctx.fill();
+    });
+  }
+
+  // =========================================================
+  // HIT TESTING  (mirrors CADViewer mousePressEvent)
+  // =========================================================
+  function pointInPolygon(pt, poly){
+    const [x,y] = pt;
+    let inside = false;
+    for (let i=0, j=poly.length-1; i<poly.length; j=i++){
+      const [xi,yi] = poly[i], [xj,yj] = poly[j];
+      const intersects = ((yi>y) !== (yj>y)) &&
+        (x < (xj-xi) * (y-yi) / ((yj-yi) + 1e-12) + xi);
+      if (intersects) inside = !inside;
+    }
+    return inside;
+  }
+
+  function pointToSegmentDistance(p, a, b){
+    const [px,py]=p, [ax,ay]=a, [bx,by]=b;
+    const dx=bx-ax, dy=by-ay;
+    const lenSq = dx*dx + dy*dy;
+    if (lenSq < 1e-9) return Math.hypot(px-ax, py-ay);
+    let t = ((px-ax)*dx + (py-ay)*dy) / lenSq;
+    t = Math.max(0, Math.min(1, t));
+    const cx = ax + t*dx, cy = ay + t*dy;
+    return Math.hypot(px-cx, py-cy);
+  }
+
+  function handleCanvasClick(screenPt){
+    if (!state.transform) return;
+
+    // doors first (smallest / most specific)
+    const baseRadius = Math.max(4, Math.min(8, state.transform.scale * 0.15));
+    const doorThreshold = baseRadius + 6;
+    for (let i=0; i<state.drawData.doors.length; i++){
+      const doorScreen = worldToScreen(state.drawData.doors[i].position);
+      if (Math.hypot(screenPt[0]-doorScreen[0], screenPt[1]-doorScreen[1]) <= doorThreshold){
+        selectDoor(i);
+        return;
+      }
+    }
+
+    // rooms — smallest containing room wins
+    const worldPt = screenToWorld(screenPt);
+    const containing = state.drawData.rooms.filter(r => pointInPolygon(worldPt, r.points));
+    if (containing.length){
+      const smallest = containing.reduce((a,b) => (a.area < b.area ? a : b));
+      selectRoom(smallest);
+      return;
+    }
+
+    // walls — fallback
+    let bestIdx = null, bestDist = 6;
+    state.drawData.entities.forEach((en, idx) => {
+      if (!en) return;
+      let segments = [];
+      if (en.type === "LINE") segments = [[en.start, en.end]];
+      else if (en.type === "POLYLINE"){
+        for (let i=0;i<en.points.length-1;i++) segments.push([en.points[i], en.points[i+1]]);
+      }
+      segments.forEach(([a,b]) => {
+        const dist = pointToSegmentDistance(screenPt, worldToScreen(a), worldToScreen(b));
+        if (dist < bestDist){ bestDist = dist; bestIdx = idx; }
+      });
+    });
+    if (bestIdx !== null){
+      selectWall(bestIdx);
+      return;
+    }
+
+    clearSelection();
+  }
+
+  // =========================================================
+  // SELECTION
+  // =========================================================
+  function selectRoom(room){
+    state.selectedRoomId = room.id;
+    state.selectedDoorIndex = null;
+    state.selectedWallIndex = null;
+    renderRoomDetails(room);
+    highlightRoomListRow(room.id);
+    el("detailsBar").innerHTML =
+      "Room — <b>" + (room.name || ("Room " + room.id)) + "</b> | layer: " + room.layer +
+      " | area: " + room.area + " m² | perimeter: " + (room.perimeter ?? "-") + " m";
+    el("calculateBtn").disabled = false;
+    draw();
+  }
+
+  function selectDoor(idx){
+    state.selectedDoorIndex = idx;
+    state.selectedRoomId = null;
+    state.selectedWallIndex = null;
+    const door = state.drawData.doors[idx];
+    el("detailsBar").innerHTML =
+      "Door — block: <b>" + (door.block_name || "UNKNOWN") + "</b> | layer: " + door.layer +
+      " | position: (" + door.position[0].toFixed(3) + ", " + door.position[1].toFixed(3) + ")" +
+      " | rotation: " + (door.rotation ?? 0).toFixed(1) + "°";
+    draw();
+  }
+
+  function selectWall(idx){
+    state.selectedWallIndex = idx;
+    state.selectedRoomId = null;
+    state.selectedDoorIndex = null;
+    const en = state.drawData.entities[idx];
+    const length = entityLength(en);
+    el("detailsBar").innerHTML =
+      "Wall — layer: <b>" + (en.layer || "UNKNOWN") + "</b> | type: " + en.type +
+      " | length: " + length.toFixed(3) + " m";
+    draw();
+  }
+
+  function entityLength(en){
+    if (en.type === "LINE"){
+      const [x1,y1]=en.start,[x2,y2]=en.end;
+      return Math.hypot(x2-x1, y2-y1);
+    }
+    if (en.type === "POLYLINE"){
+      let total = 0;
+      for (let i=0;i<en.points.length-1;i++){
+        const [x1,y1]=en.points[i],[x2,y2]=en.points[i+1];
+        total += Math.hypot(x2-x1, y2-y1);
+      }
+      return total;
+    }
+    return 0;
+  }
+
+  function clearSelection(){
+    state.selectedRoomId = null;
+    state.selectedDoorIndex = null;
+    state.selectedWallIndex = null;
+    el("detailsBar").textContent = "Click a room, door, or wall in the drawing — or a row in the sidebar — to see its details.";
+    draw();
+  }
+
+  // =========================================================
+  // ROOM LIST + DETAILS PANEL
+  // =========================================================
+  function renderRoomList(){
+    const list = el("roomList");
+    list.innerHTML = "";
+    state.drawData.rooms.forEach(room => {
+      const row = document.createElement("div");
+      row.className = "room-row";
+      row.dataset.roomId = room.id;
+      row.innerHTML =
+        "<span class='r-name'>" + (room.name || ("Room " + room.id)) + "</span>" +
+        "<span class='r-area'>" + room.area + " m²</span>";
+      row.addEventListener("click", () => selectRoom(room));
+      list.appendChild(row);
+    });
+  }
+
+  function highlightRoomListRow(roomId){
+    document.querySelectorAll(".room-row").forEach(row => {
+      row.classList.toggle("active", String(row.dataset.roomId) === String(roomId));
+    });
+  }
+
+  function renderRoomDetails(room){
+    const sidesText = (room.sides || []).map(s => s.toFixed(2)).join(", ") || "–";
+    el("roomSectionBody").innerHTML =
+      "<div class='room-card'>" +
+        "<div class='room-name'>" + (room.name || ("Room " + room.id)) + "</div>" +
+        "<div class='room-meta'>layer: " + room.layer + "</div>" +
+        "<div class='metric-grid'>" +
+          metric("Area", room.area + " m²") +
+          metric("Perimeter", (room.perimeter ?? "-") + " m") +
+          metric("Width", (room.width ?? "-") + " m") +
+          metric("Length", (room.length ?? "-") + " m") +
+        "</div>" +
+        "<div class='sides-row'>Sides (m): " + sidesText + "</div>" +
+      "</div>";
+  }
+
+  function metric(label, value){
+    return "<div class='metric'><span class='m-lbl'>" + label + "</span><span class='m-val'>" + value + "</span></div>";
+  }
+
+  // =========================================================
+  // CANVAS INTERACTION — click select, drag pan, wheel zoom
+  // =========================================================
+  let downPos = null, didDrag = false;
+
+  canvas.addEventListener("mousedown", (e) => {
+    downPos = [e.offsetX, e.offsetY];
+    didDrag = false;
+    state.dragging = true;
+    canvas.classList.add("panning");
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (!state.dragging || !downPos) return;
+    const rect = canvas.getBoundingClientRect();
+    const cur = [e.clientX - rect.left, e.clientY - rect.top];
+    const dx = cur[0]-downPos[0], dy = cur[1]-downPos[1];
+    if (Math.hypot(dx,dy) > 3){
+      didDrag = true;
+      state.view.offsetX += dx;
+      state.view.offsetY += dy;
+      downPos = cur;
+      draw();
+    }
+  });
+  window.addEventListener("mouseup", (e) => {
+    if (state.dragging && !didDrag && state.transform){
+      const rect = canvas.getBoundingClientRect();
+      handleCanvasClick([e.clientX - rect.left, e.clientY - rect.top]);
+    }
+    state.dragging = false;
+    canvas.classList.remove("panning");
+    downPos = null;
+  });
+
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 1.1 : 0.9;
+    state.view.zoom = Math.max(0.2, Math.min(8, state.view.zoom * delta));
+    draw();
+  }, { passive: false });
+
+  el("zoomInBtn").addEventListener("click", () => { state.view.zoom = Math.min(8, state.view.zoom*1.2); draw(); });
+  el("zoomOutBtn").addEventListener("click", () => { state.view.zoom = Math.max(0.2, state.view.zoom/1.2); draw(); });
+  el("zoomFitBtn").addEventListener("click", () => { fitView(); draw(); });
+
+  // =========================================================
+  // CALCULATE
+  // =========================================================
+  el("calculateBtn").addEventListener("click", runCalculation);
+
+  async function runCalculation(){
+    if (!state.selectedRoomId || !state.sessionId) return;
+
+    const place = el("placeSelect").value;
+    const height = parseFloat(el("heightInput").value);
+    const standardRef = el("standardRefInput").value.trim();
+    const projectName = el("projectNameInput").value.trim();
+
+    const btn = el("calculateBtn");
+    btn.disabled = true;
+    btn.innerHTML = "<span class='spin'></span>Calculating…";
+
+    try {
+      const res = await fetch(
+        apiUrl("/api/cad/calculate/" + state.sessionId + "/room/" + state.selectedRoomId),
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            place, height,
+            standard_ref_no: standardRef || null,
+            project_name: projectName,
+            fast: false,
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || data.status !== "success"){
+        throw new Error(data.message || ("Calculation failed (" + res.status + ")"));
+      }
+      state.lastResult = data.result;
+      renderResults(data.result);
+    } catch (err) {
+      el("resultsSection").style.display = "block";
+      el("resultsBody").innerHTML = "<div class='result-status error'>Error</div><div class='empty-note'>" + err.message + "</div>";
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Calculate lighting";
+    }
+  }
+
+  // ---- result normalization, mirrors result_window.py ----
+  function coalesce(row, keys, fallback){
+    for (const k of keys){
+      if (row[k] !== undefined && row[k] !== null && row[k] !== ""){
+        return row[k];
+      }
+    }
+    return fallback;
+  }
+  function asFloat(v){
+    if (v === undefined || v === null) return null;
+    const n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  }
+  function asBool(v){
+    if (typeof v === "boolean") return v;
+    if (typeof v === "string") return ["1","true","yes","y"].includes(v.trim().toLowerCase());
+    return !!v;
+  }
+  function normalizeOption(row, index){
+    const fixtures = asFloat(coalesce(row, ["Fixtures"]));
+    const power = asFloat(coalesce(row, ["Power (W)"]));
+    const totalPower = asFloat(coalesce(row, ["Total Power (W/H)","Total Power (W)"]));
+    const avgLux = asFloat(coalesce(row, ["E_avg_grid_lx","e_avg_grid_lx","Average Lux"]));
+    const u0 = asFloat(coalesce(row, ["U0_calculated","u0_calculated","Uniformity"]));
+    const luxGap = asFloat(coalesce(row, ["Lux gap"]));
+    const u0Gap = asFloat(coalesce(row, ["U0 gap"]));
+    let layout = coalesce(row, ["Layout grid"], "");
+    if (!layout){
+      const nx = coalesce(row, ["layout_nx"]), ny = coalesce(row, ["layout_ny"]);
+      if (nx && ny) layout = nx + " x " + ny;
+    }
+    return {
+      index,
+      isCompliant: asBool(row.is_compliant),
+      selection: coalesce(row, ["Selection"], "-"),
+      luminaire: coalesce(row, ["Luminaire"], "-"),
+      powerW: power,
+      fixtures,
+      layout: layout || "-",
+      avgLux, u0, totalPowerW: totalPower, luxGap, u0Gap,
+      luxBasis: coalesce(row, ["Lux compliance basis","lux_compliance_basis"], "-"),
+      spacingX: asFloat(coalesce(row, ["Spacing X (m)"])),
+      spacingY: asFloat(coalesce(row, ["Spacing Y (m)"])),
+      efficacy: asFloat(coalesce(row, ["Efficacy (lm/W)"])),
+      iesFile: coalesce(row, ["IES file"], "-"),
+      raw: row,
+    };
+  }
+  function optionSortKey(o){
+    const L = 1e9;
+    return [
+      o.isCompliant ? 0 : 1,
+      o.fixtures ?? L,
+      o.totalPowerW ?? L,
+      o.u0Gap ?? L,
+      o.luxGap ?? L,
+      o.index,
+    ];
+  }
+  function compareArrays(a,b){
+    for (let i=0;i<a.length;i++){ if (a[i] !== b[i]) return a[i]-b[i]; }
+    return 0;
+  }
+
+  function fmt(v, decimals){
+    if (v === null || v === undefined) return "-";
+    if (typeof v === "string") return v;
+    return v.toFixed(decimals ?? 2);
+  }
+
+  function renderResults(result){
+    el("resultsSection").style.display = "block";
+    const results = result.results || [];
+    state.normalizedOptions = results.map(normalizeOption).sort((a,b) => compareArrays(optionSortKey(a), optionSortKey(b)));
+    state.selectedOptionIndex = state.normalizedOptions.length ? 0 : null;
+
+    let html = "<div class='result-status " + (result.status === "success" ? "success" : "error") + "'>" +
+      (result.status === "success" ? "●" : "✕") + " " + (result.status || "-") + "</div>";
+    html += "<div class='empty-note' style='margin-bottom:14px;'>" +
+      results.length + " option(s) · " + fmt(result.length,2) + " × " + fmt(result.width,2) + " m room" +
+    "</div>";
+
+    if (!results.length){
+      html += "<div class='empty-note'>No fixture options returned.</div>";
+      el("resultsBody").innerHTML = html;
+      return;
+    }
+
+    html += "<div id='optionRows'></div><div id='optionDetail' class='option-detail'></div>";
+    el("resultsBody").innerHTML = html;
+
+    const rowsWrap = el("optionRows");
+    state.normalizedOptions.forEach((opt, i) => {
+      const row = document.createElement("div");
+      row.className = "option-row " + (opt.isCompliant ? "compliant" : "noncompliant") + (i===0 ? " selected" : "");
+      row.innerHTML =
+        "<div class='opt-top'>" +
+          "<span class='opt-lum'>" + opt.luminaire + "</span>" +
+          "<span class='opt-status " + (opt.isCompliant ? "c" : "n") + "'>" + (opt.isCompliant ? "Compliant" : "Not compliant") + "</span>" +
+        "</div>" +
+        "<div class='opt-grid'>" +
+          "<div>Fixtures <b>" + fmt(opt.fixtures,0) + "</b></div>" +
+          "<div>Power <b>" + fmt(opt.powerW,1) + "W</b></div>" +
+          "<div>Total <b>" + fmt(opt.totalPowerW,1) + "W</b></div>" +
+          "<div>Avg lux <b>" + fmt(opt.avgLux,2) + "</b></div>" +
+          "<div>U0 <b>" + fmt(opt.u0,3) + "</b></div>" +
+          "<div>Layout <b>" + opt.layout + "</b></div>" +
+        "</div>";
+      row.addEventListener("click", () => {
+        document.querySelectorAll(".option-row").forEach(r => r.classList.remove("selected"));
+        row.classList.add("selected");
+        showOptionDetail(opt);
+      });
+      rowsWrap.appendChild(row);
+    });
+
+    showOptionDetail(state.normalizedOptions[0]);
+  }
+
+  function showOptionDetail(opt){
+    const lines = [
+      "Selection mode: " + opt.selection,
+      "Fixtures: " + fmt(opt.fixtures,0) + "   Power/fixture: " + fmt(opt.powerW,1) + "W   Total: " + fmt(opt.totalPowerW,1) + "W",
+      "Avg lux: " + fmt(opt.avgLux,2) + " (" + opt.luxBasis + ")   U0: " + fmt(opt.u0,3),
+      "Lux gap: " + fmt(opt.luxGap,3) + "   U0 gap: " + fmt(opt.u0Gap,3),
+      "Layout: " + opt.layout + "   Spacing: " + fmt(opt.spacingX,2) + " × " + fmt(opt.spacingY,2) + " m",
+      "Efficacy: " + fmt(opt.efficacy,2) + " lm/W   IES file: " + opt.iesFile,
+    ];
+    el("optionDetail").textContent = lines.join("\n");
+  }
+
+})();
+</script>
+</body>
+</html>
