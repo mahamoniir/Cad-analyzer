@@ -18,10 +18,9 @@ wiring this in — I don't have those two files yet):
     helper app.py exposes. Placeholder `_admin_ok()` below needs to be
     swapped for the real one (same sys.modules trick ai_routes.py uses,
     per the docs, to avoid the circular-import / duplicate-module bug).
-  - /calculate is called over HTTP via the existing LuxScaleClient
-    (root luxscale_client.py) rather than importing app.py's calculation
-    function directly, to avoid circular imports. If you'd rather call
-    the calculation function in-process, tell me and I'll refactor.
+  - /cad_calc is called over HTTP via LuxScaleClient.cad_calc()
+    (root luxscale_client.py) with the room polygon vertices, rather
+    than importing the calculation backend in-process.
 """
 
 from __future__ import annotations
@@ -106,9 +105,7 @@ def _resolve_oda_path() -> str | None:
 
 ODA_PATH = _resolve_oda_path()
 
-# Base URL the internal LuxScaleClient calls back into for /calculate.
-# Defaults to localhost since this blueprint is expected to run inside
-# the same Flask app that serves /calculate.
+# Base URL for LuxScale /cad_calc (and legacy /calculate).
 # INTERNAL_API_BASE_URL = os.environ.get("LUXSCALE_INTERNAL_BASE_URL", "http://127.0.0.1:5000")
 INTERNAL_API_BASE_URL = os.environ.get("LUXSCALE_INTERNAL_BASE_URL", "https://web-production-8d09d.up.railway.app/")
 
@@ -342,9 +339,7 @@ def get_draw_data(session_id):
 
 
 # =========================================================
-# GET /api/cad/places   (proxy — LuxScale backend runs on a different
-# port than this app, so the browser page calls this same-origin route
-# instead of reaching cross-origin for /places directly)
+# GET /api/cad/places   (legacy proxy — prefer standards picker)
 # =========================================================
 
 @cad_bp.route("/places", methods=["GET"])
@@ -356,6 +351,73 @@ def get_places_proxy():
     except RuntimeError as error:
         return jsonify({"status": "error", "message": str(error)}), 502
 
+    return jsonify(data)
+
+
+# =========================================================
+# Standards picker proxies (same-origin for the browser UI)
+# =========================================================
+
+@cad_bp.route("/standards/categories", methods=["GET"])
+def standards_categories_proxy():
+    client = LuxScaleClient(INTERNAL_API_BASE_URL)
+    try:
+        data = client.get_standards_categories()
+    except RuntimeError as error:
+        return jsonify({"status": "error", "message": str(error)}), 502
+    return jsonify(data)
+
+
+@cad_bp.route("/standards/categories/<path:category>/tasks", methods=["GET"])
+def standards_tasks_proxy(category):
+    client = LuxScaleClient(INTERNAL_API_BASE_URL)
+    try:
+        data = client.get_standards_tasks(category)
+    except ValueError as error:
+        return jsonify({"status": "error", "message": str(error)}), 400
+    except RuntimeError as error:
+        return jsonify({"status": "error", "message": str(error)}), 502
+    return jsonify(data)
+
+
+@cad_bp.route("/standards/detect", methods=["POST"])
+def standards_detect_proxy():
+    body = request.get_json(silent=True) or {}
+    text = (body.get("text") or "").strip()
+    limit = body.get("limit", 5)
+    if not text:
+        return jsonify({"status": "error", "message": "'text' is required."}), 400
+
+    client = LuxScaleClient(INTERNAL_API_BASE_URL)
+    try:
+        data = client.detect_standards(text, limit=limit)
+    except ValueError as error:
+        return jsonify({"status": "error", "message": str(error)}), 400
+    except RuntimeError as error:
+        return jsonify({"status": "error", "message": str(error)}), 502
+    return jsonify(data)
+
+
+@cad_bp.route("/standards/resolve-by-task", methods=["POST"])
+def standards_resolve_by_task_proxy():
+    body = request.get_json(silent=True) or {}
+    category = (body.get("category") or "").strip()
+    task = (body.get("task_or_activity") or "").strip()
+    if not category or not task:
+        return jsonify({
+            "status": "error",
+            "message": "'category' and 'task_or_activity' are required.",
+        }), 400
+
+    client = LuxScaleClient(INTERNAL_API_BASE_URL)
+    try:
+        data = client.resolve_standard_by_task(
+            category=category,
+            task_or_activity=task,
+            ref_no_hint=body.get("ref_no_hint"),
+        )
+    except RuntimeError as error:
+        return jsonify({"status": "error", "message": str(error)}), 502
     return jsonify(data)
 
 
@@ -373,25 +435,37 @@ def calculate_room(session_id, room_id):
 
     place = (body.get("place") or "").strip()
     height = body.get("height")
-    standard_ref_no = body.get("standard_ref_no")
+    standard_ref_no = (body.get("standard_ref_no") or "").strip() or None
     project_name = body.get("project_name", "CAD Lighting Analysis")
     fast = bool(body.get("fast", False))
 
     if height is None:
         return jsonify({"status": "error", "message": "'height' is required."}), 400
 
-    reader = session["reader"]
+    if not standard_ref_no and not place:
+        return jsonify({
+            "status": "error",
+            "message": "Select a standard task (standard_ref_no) or provide place.",
+        }), 400
+
     rooms = _get_cached_rooms(session)
     room = _room_by_id(rooms, room_id)
 
     if room is None:
         return jsonify({"status": "error", "message": f"No room with id '{room_id}' in this session."}), 404
 
+    vertices = room.get("points") or []
+    if len(vertices) < 3:
+        return jsonify({
+            "status": "error",
+            "message": "Room polygon must have at least 3 vertices.",
+        }), 400
+
     client = LuxScaleClient(INTERNAL_API_BASE_URL)
 
     try:
-        result = client.calculate(
-            sides=room["sides"],
+        result = client.cad_calc(
+            vertices=vertices,
             height=height,
             place=place,
             standard_ref_no=standard_ref_no,

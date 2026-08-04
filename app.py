@@ -19,7 +19,7 @@ Then either:
 
 Env vars:
   LUXSCALE_CAD_PORT              port to listen on (default 5001)
-  LUXSCALE_INTERNAL_BASE_URL     where the LuxScale /calculate backend
+  LUXSCALE_INTERNAL_BASE_URL     where the LuxScale /cad_calc backend
                                   lives (default http://127.0.0.1:5000)
   LUXSCALE_CAD_ADMIN_TOKEN       shared secret for the one admin-only
                                   route, GET /api/cad/sessions. Unset =

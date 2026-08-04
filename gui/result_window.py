@@ -327,11 +327,19 @@ class LightingResultWindow(QDialog):
         lines.append("Response")
         lines.append(f"- Status: {self.result.get('status', '-')}")
         lines.append(f"- Options returned: {len(self.result.get('results', []) or [])}")
-        lines.append(f"- Length (m): {self.result.get('length', '-')}")
-        lines.append(f"- Width (m): {self.result.get('width', '-')}")
+        lines.append(f"- Equivalent length (m): {self.result.get('length', '-')}")
+        lines.append(f"- Equivalent width (m): {self.result.get('width', '-')}")
 
         meta = self.result.get("calculation_meta", {}) or {}
-        if meta:
+        poly = meta.get("polygon") if isinstance(meta, dict) else None
+        if isinstance(poly, dict) and poly:
+            lines.append("")
+            lines.append("Polygon geometry")
+            lines.append(f"- Vertices: {poly.get('vertex_count', len(poly.get('vertices') or []))}")
+            lines.append(f"- Area (m²): {poly.get('area_m2', '-')}")
+            lines.append(f"- Perimeter (m): {poly.get('perimeter_m', '-')}")
+            lines.append(f"- Convex: {poly.get('is_convex', '-')}")
+        elif meta:
             lines.append("")
             lines.append("Calculation Meta")
             for key in sorted(meta.keys()):
@@ -360,6 +368,7 @@ class LightingResultWindow(QDialog):
         room = self.room or {}
         sides = room.get("sides", [])
         sides_text = ", ".join(str(side) for side in sides) if sides else "-"
+        points = room.get("points") or []
 
         context = self.request_context
         lines = [
@@ -369,13 +378,16 @@ class LightingResultWindow(QDialog):
             f"Perimeter (m): {room.get('perimeter', '-')}",
             f"Width (m): {room.get('width', '-')}",
             f"Length (m): {room.get('length', '-')}",
+            f"Vertices: {len(points)}",
             f"Sides (m): {sides_text}",
             "",
             "Request Inputs",
-            f"Place: {context.get('place', '-')}",
+            f"Category: {context.get('place', '-')}",
+            f"Task / activity: {context.get('task_or_activity', '-') or '-'}",
             f"Ceiling height (m): {context.get('height', '-')}",
             f"Standard ref: {context.get('standard_ref_no', '-') or '-'}",
             f"Project name: {context.get('project_name', '-')}",
+            f"API: /cad_calc (polygon)",
         ]
         self.room_details_text.setPlainText("\n".join(lines))
 

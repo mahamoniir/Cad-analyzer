@@ -65,21 +65,23 @@ class MainWindow(QMainWindow):
 
         self.current_room = None
 
-        self.places = {}
+        self.categories = []
 
-        self.category_keywords = {}
+        self.tasks_by_category = {}
+
+        self.selected_task = None
 
         self.client = (
 
             LuxScaleClient(
 
-                "http://127.0.0.1:5000"
+                "https://web-production-8d09d.up.railway.app"
             )
         )
 
         self.build_ui()
 
-        self.load_places()
+        self.load_standards_categories()
 
     # =====================================================
     # UI
@@ -417,82 +419,30 @@ class MainWindow(QMainWindow):
         )
 
         # -------------------------------------------------
-        # PLACE
+        # STANDARDS (category → task)
         # -------------------------------------------------
 
-        right_layout.addWidget(
+        right_layout.addWidget(QLabel("Standard Category"))
 
-            QLabel(
+        self.category_combo = QComboBox()
+        self.category_combo.currentIndexChanged.connect(self.category_changed)
+        right_layout.addWidget(self.category_combo)
 
-                "Room Type"
-            )
-        )
+        right_layout.addWidget(QLabel("Task / Activity"))
 
-        self.place_combo = QComboBox()
+        self.task_combo = QComboBox()
+        self.task_combo.currentIndexChanged.connect(self.task_changed)
+        right_layout.addWidget(self.task_combo)
 
-        self.place_combo.currentTextChanged.connect(
+        self.required_lux_label = QLabel("Required Lux: -")
+        right_layout.addWidget(self.required_lux_label)
 
-            self.place_changed
-        )
+        self.uniformity_label = QLabel("Uniformity: -")
+        right_layout.addWidget(self.uniformity_label)
 
-        right_layout.addWidget(
-
-            self.place_combo
-        )
-
-        self.required_lux_label = QLabel(
-
-            "Required Lux: -"
-        )
-
-        right_layout.addWidget(
-
-            self.required_lux_label
-        )
-
-        self.uniformity_label = QLabel(
-
-            "Uniformity: -"
-        )
-
-        right_layout.addWidget(
-
-            self.uniformity_label
-        )
-
-        self.category_label = QLabel(
-
-            "Standard Category: -"
-        )
-
-        self.category_label.setWordWrap(
-
-            True
-        )
-
-        right_layout.addWidget(
-
-            self.category_label
-        )
-
-        # -------------------------------------------------
-        # STANDARD REF
-        # -------------------------------------------------
-
-        right_layout.addWidget(
-
-            QLabel(
-
-                "Standard Reference"
-            )
-        )
-
-        self.standard_ref_input = QLineEdit()
-
-        right_layout.addWidget(
-
-            self.standard_ref_input
-        )
+        self.ref_label = QLabel("Standard Ref: -")
+        self.ref_label.setWordWrap(True)
+        right_layout.addWidget(self.ref_label)
 
         # -------------------------------------------------
         # PROJECT NAME
@@ -581,75 +531,35 @@ class MainWindow(QMainWindow):
     # LOAD API DATA
     # =====================================================
 
-    def load_places(self):
-
+    def load_standards_categories(self):
         try:
+            data = self.client.get_standards_categories()
+            self.categories = data.get("categories") or []
+            self.tasks_by_category = {}
+            self.selected_task = None
 
-            data = (
-
-                self.client.get_places()
-            )
-
-            self.place_combo.clear()
-
-            self.places = {}
-
-            for place in data.get(
-
-                "calculator_places",
-
-                []
-            ):
-
-                name = (
-
-                    place.get(
-
-                        "key"
-                    )
-                )
-
+            self.category_combo.blockSignals(True)
+            self.category_combo.clear()
+            self.category_combo.addItem("Select category…", "")
+            for entry in self.categories:
+                name = entry.get("category")
                 if not name:
-
                     continue
+                count = entry.get("ref_count")
+                label = f"{name} ({count})" if count is not None else name
+                self.category_combo.addItem(label, name)
+            self.category_combo.blockSignals(False)
 
-                self.places[name] = place
-
-                self.place_combo.addItem(
-
-                    name
-                )
-
-            self.category_keywords = (
-
-                data.get(
-
-                    "category_keywords",
-
-                    {}
-                )
-            )
-
-            self.place_changed(
-
-                # self.place_combo.currentIndex()
-                self.place_combo.currentText()
-            )
-
+            self.task_combo.blockSignals(True)
+            self.task_combo.clear()
+            self.task_combo.addItem("Select a category first…", "")
+            self.task_combo.blockSignals(False)
+            self.update_standards_readout(None)
         except Exception as error:
-
             QMessageBox.warning(
-
                 self,
-
                 "API Error",
-
-                (
-
-                    "Could not load places from LuxScale API:\n"
-
-                    f"{error}"
-                )
+                f"Could not load standards categories from LuxScale API:\n{error}",
             )
 
     # =====================================================
@@ -1041,6 +951,8 @@ class MainWindow(QMainWindow):
             )
         )
 
+        self.detect_standards_for_room(room)
+
     # =====================================================
     # CANVAS SELECTION (room / door / wall clicked in the drawing)
     # =====================================================
@@ -1198,154 +1110,114 @@ class MainWindow(QMainWindow):
         return 0.0
 
     # =====================================================
-    # PLACE CHANGED
+    # STANDARDS PICKER
     # =====================================================
 
-    def place_changed(
+    def category_changed(self, _index=None):
+        category = self.category_combo.currentData()
+        self.selected_task = None
+        self.task_combo.blockSignals(True)
+        self.task_combo.clear()
 
-        self,
+        if not category:
+            self.task_combo.addItem("Select a category first…", "")
+            self.task_combo.blockSignals(False)
+            self.update_standards_readout(None)
+            return
 
-        text
-    ):
+        try:
+            tasks = self.tasks_by_category.get(category)
+            if tasks is None:
+                data = self.client.get_standards_tasks(category)
+                tasks = data.get("tasks") or []
+                self.tasks_by_category[category] = tasks
 
-        place = (
-
-            self.places.get(
-
-                text,
-
-                {}
+            self.task_combo.addItem("Select task / activity…", "")
+            for task in tasks:
+                ref = task.get("ref_no")
+                label = f"{task.get('task_or_activity', '')} ({ref})"
+                self.task_combo.addItem(label, ref)
+        except Exception as error:
+            self.task_combo.addItem("Failed to load tasks", "")
+            QMessageBox.warning(
+                self,
+                "API Error",
+                f"Could not load tasks for category:\n{error}",
             )
-        )
 
+        self.task_combo.blockSignals(False)
+        self.update_standards_readout(None)
+
+    def task_changed(self, _index=None):
+        category = self.category_combo.currentData()
+        ref_no = self.task_combo.currentData()
+        tasks = self.tasks_by_category.get(category) or []
+        self.selected_task = next(
+            (t for t in tasks if t.get("ref_no") == ref_no),
+            None,
+        )
+        self.update_standards_readout(self.selected_task)
+
+    def update_standards_readout(self, task):
+        if not task:
+            self.required_lux_label.setText("Required Lux: -")
+            self.uniformity_label.setText("Uniformity: -")
+            self.ref_label.setText("Standard Ref: -")
+            return
         self.required_lux_label.setText(
-
-            (
-
-                f"Required Lux: "
-
-                f"{place.get('lux', '-')}"
-            )
+            f"Required Lux: {task.get('Em_r_lx', '-')}"
         )
-
         self.uniformity_label.setText(
-
-            (
-
-                f"Uniformity: "
-
-                f"{place.get('uniformity', '-')}"
-            )
+            f"Uniformity: {task.get('Uo', '-')}"
+        )
+        self.ref_label.setText(
+            f"Standard Ref: {task.get('ref_no', '-')}"
         )
 
-        category = (
+    def detect_standards_for_room(self, room):
+        text = str((room or {}).get("name") or "").strip()
+        if not text or text.lower().startswith("room "):
+            return
+        try:
+            data = self.client.detect_standards(text, limit=5)
+            match = (data.get("matches") or [None])[0]
+            if not match or not match.get("category"):
+                return
 
-            self.find_category(
+            category = match["category"]
+            idx = self.category_combo.findData(category)
+            if idx < 0:
+                return
 
-                text
-            )
-        )
+            if self.category_combo.currentIndex() == idx:
+                self.category_changed()
+            else:
+                self.category_combo.setCurrentIndex(idx)
 
-        self.category_label.setText(
-
-            (
-
-                f"Standard Category: "
-
-                f"{category}"
-            )
-        )
-
-        # Keep user-entered reference, but help when field is empty.
-        if not self.standard_ref_input.text().strip():
-            default_ref = self.get_place_default_standard_ref(
-                text
-            )
-            if default_ref:
-                self.standard_ref_input.setText(
-                    default_ref
-                )
-
-    # =====================================================
-    # FIND STANDARD CATEGORY
-    # =====================================================
-
-    def find_category(
-
-        self,
-
-        place_name
-    ):
-
-        search_text = (
-
-            place_name.lower()
-        )
-
-        for category, keywords in (
-
-            self.category_keywords.items()
-        ):
-
-            if search_text in category.lower():
-
-                return category
-
-            for keyword in keywords:
-
-                if keyword.lower() in search_text:
-
-                    return category
-
-        return "No category matched"
-
-    def get_place_default_standard_ref(
-        self,
-        place_name
-    ):
-
-        place = self.places.get(
-            place_name,
-            {}
-        )
-
-        for key in (
-            "standard_ref_no",
-            "standard_ref",
-            "default_standard_ref_no",
-            "reference",
-            "ref_no"
-        ):
-            value = place.get(key)
-            if value:
-                return str(value).strip()
-
-        return ""
+            preferred = None
+            samples = match.get("sample_tasks") or []
+            if samples:
+                preferred = samples[0].get("ref_no")
+            if not preferred:
+                refs = match.get("ref_nos") or []
+                preferred = refs[0] if refs else None
+            if preferred:
+                task_idx = self.task_combo.findData(preferred)
+                if task_idx >= 0:
+                    self.task_combo.setCurrentIndex(task_idx)
+        except Exception:
+            pass
 
     @staticmethod
-    def get_valid_room_sides(
-        room
-    ):
-
+    def get_valid_room_sides(room):
         valid_sides = []
-
-        for raw_side in room.get(
-            "sides",
-            []
-        ):
+        for raw_side in room.get("sides", []):
             try:
                 side = float(raw_side)
-            except (
-                TypeError,
-                ValueError
-            ):
+            except (TypeError, ValueError):
                 continue
-
             if side > 0.001:
-                valid_sides.append(
-                    round(side, 4)
-                )
-
+                valid_sides.append(round(side, 4))
         return valid_sides
 
     # =====================================================
@@ -1353,78 +1225,45 @@ class MainWindow(QMainWindow):
     # =====================================================
 
     def calculate_lighting(self):
-
         if not self.current_room:
-
             QMessageBox.warning(
-
                 self,
-
                 "No Room Selected",
-
-                "Select a detected room first."
+                "Select a detected room first.",
             )
-
             return
 
-        room = (
-
-            self.current_room
-        )
-
-        place = (
-
-            self.place_combo.currentText().strip()
-        )
-
-        if not place:
+        room = self.current_room
+        task = self.selected_task
+        standard_ref = (task or {}).get("ref_no") or self.task_combo.currentData()
+        if not standard_ref:
             QMessageBox.warning(
                 self,
-                "Room Type Missing",
-                "Select a room type before calculating lighting."
+                "Standard Missing",
+                "Select a standard category and task / activity first.",
             )
             return
 
-        sides = self.get_valid_room_sides(
-            room
-        )
-        if len(sides) < 3:
+        vertices = room.get("points") or []
+        if len(vertices) < 3:
             QMessageBox.warning(
                 self,
                 "Invalid Room Geometry",
-                "Selected room boundary is invalid. Please select another room."
+                "Selected room boundary is invalid. Please select another room.",
             )
             return
 
-        standard_ref = (
-
-            self.standard_ref_input.text().strip()
-        )
-        if not standard_ref:
-            standard_ref = self.get_place_default_standard_ref(
-                place
-            )
         height = self.height_input.value()
         project_name = self.project_name_input.text().strip()
+        category = self.category_combo.currentData() or ""
 
         try:
-
-            result = (
-
-                self.client.calculate(
-
-                    sides=sides,
-
-                    height=height,
-
-                    place=place,
-
-                    standard_ref_no=standard_ref if standard_ref else None,
-
-                    project_name=project_name,
-
-                    fast=False
-                )
+            result = self.client.cad_calc(
+                vertices=vertices,
+                height=height,
+                standard_ref_no=standard_ref,
+                project_name=project_name,
+                fast=False,
             )
 
             self.result_text.setPlainText(
@@ -1441,22 +1280,19 @@ class MainWindow(QMainWindow):
                 room=room,
                 result=result,
                 request_context={
-                    "place": place,
+                    "place": category,
                     "height": height,
                     "standard_ref_no": standard_ref,
                     "project_name": project_name,
+                    "task_or_activity": (task or {}).get("task_or_activity"),
                 },
-                parent=self
+                parent=self,
             )
             detail_window.exec()
 
         except Exception as error:
-
             QMessageBox.critical(
-
                 self,
-
                 "Calculation Error",
-
-                str(error)
+                str(error),
             )

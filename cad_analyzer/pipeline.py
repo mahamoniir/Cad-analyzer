@@ -174,47 +174,26 @@ class CADPipeline:
     ):
 
         client = LuxScaleClient(
-
             self.api_url
         )
 
-        payload = {
+        vertices = room.get("points") or []
+        print("Sending room polygon to LuxScale /cad_calc...")
+        print({
+            "vertices": vertices,
+            "height": height,
+            "place": place,
+            "standard_ref_no": standard_ref_no,
+            "project_name": project_name,
+        })
 
-            "sides":
-                room["sides"],
-
-            "height":
-                height,
-
-            "place":
-                place,
-
-            "project_info": {
-
-                "project_name":
-                    project_name,
-
-                "standard_ref_no":
-                    standard_ref_no
-            },
-
-            "fast":
-                False
-        }
-
-        print(
-
-            "Sending room to LuxScaleAI..."
-        )
-
-        print(
-
-            payload
-        )
-
-        result = client.calculate_raw(
-
-            payload
+        result = client.cad_calc(
+            vertices=vertices,
+            height=height,
+            place=place,
+            standard_ref_no=standard_ref_no,
+            project_name=project_name,
+            fast=False,
         )
 
         return result

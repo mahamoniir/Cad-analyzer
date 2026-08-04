@@ -282,21 +282,20 @@
         <div class="section-title">Calculation setup</div>
 
         <div class="field">
-          <label>Room type</label>
-          <select id="placeSelect"></select>
+          <label>Standard category</label>
+          <select id="categorySelect"></select>
+        </div>
+
+        <div class="field">
+          <label>Task / activity</label>
+          <select id="taskSelect"></select>
         </div>
 
         <div class="place-readout" id="placeReadout"></div>
 
-        <div class="field-row" style="margin-top:14px;">
-          <div class="field">
-            <label>Ceiling height (m)</label>
-            <input type="number" id="heightInput" value="3.2" min="0.1" step="0.1" />
-          </div>
-          <div class="field">
-            <label>Standard reference</label>
-            <input type="text" id="standardRefInput" placeholder="e.g. 5.2.1" />
-          </div>
+        <div class="field" style="margin-top:14px;">
+          <label>Ceiling height (m)</label>
+          <input type="number" id="heightInput" value="3.2" min="0.1" step="0.1" />
         </div>
 
         <div class="field">
@@ -336,8 +335,9 @@
     apiBase: localStorage.getItem("luxscale_api_base") || "",
     sessionId: null,
     drawData: null,       // { layers, rooms, doors, entities, unmatched_labels }
-    places: {},            // key -> place object
-    categoryKeywords: {},
+    categories: [],        // from /api/standards/categories
+    tasksByCategory: {},   // category -> task rows
+    selectedTask: null,    // {ref_no, Em_r_lx, Uo, task_or_activity, ...}
     selectedRoomId: null,
     selectedDoorIndex: null,
     selectedWallIndex: null,
@@ -419,7 +419,7 @@
       state.sessionId = data.session_id;
       updateReadouts(data.summary);
       await loadDrawData();
-      await loadPlaces();
+      await loadStandardsCategories();
     } catch (err) {
       toast("Upload error: " + err.message);
     } finally {
@@ -461,64 +461,128 @@
   }
 
   // =========================================================
-  // PLACES (/places) — room type dropdown
+  // STANDARDS — category → task/activity → standard_ref_no
   // =========================================================
-  async function loadPlaces(){
+  async function loadStandardsCategories(){
     try {
-      const res = await fetch(apiUrl("/api/cad/places"));
+      const res = await fetch(apiUrl("/api/cad/standards/categories"));
       const data = await res.json();
-      const select = el("placeSelect");
+      if (!res.ok || data.status === "error"){
+        throw new Error(data.message || ("HTTP " + res.status));
+      }
+      state.categories = data.categories || [];
+      const select = el("categorySelect");
       select.innerHTML = "";
-      state.places = {};
-
-      (data.calculator_places || []).forEach((place) => {
-        if (!place.key) return;
-        state.places[place.key] = place;
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = "Select category…";
+      select.appendChild(blank);
+      state.categories.forEach((c) => {
         const opt = document.createElement("option");
-        opt.value = place.key;
-        opt.textContent = place.key;
+        opt.value = c.category;
+        opt.textContent = c.category + (c.ref_count != null ? " (" + c.ref_count + ")" : "");
         select.appendChild(opt);
       });
-
-      state.categoryKeywords = data.category_keywords || {};
-      select.onchange = () => onPlaceChanged(select.value);
-      if (select.value) onPlaceChanged(select.value);
+      select.onchange = () => onCategoryChanged(select.value);
+      el("taskSelect").onchange = () => onTaskChanged(el("taskSelect").value);
+      clearTaskSelect("Select a category first…");
+      updateStandardsReadout(null);
     } catch (err) {
-      toast("Could not load room types from /places: " + err.message);
+      toast("Could not load standards categories: " + err.message);
     }
   }
 
-  function findCategory(placeName){
-    const search = (placeName || "").toLowerCase();
-    for (const [category, keywords] of Object.entries(state.categoryKeywords)){
-      if (search.includes(category.toLowerCase())) return category;
-      for (const kw of keywords){
-        if (search.includes(String(kw).toLowerCase())) return category;
+  function clearTaskSelect(placeholder){
+    const taskSelect = el("taskSelect");
+    taskSelect.innerHTML = "";
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = placeholder || "Select task…";
+    taskSelect.appendChild(opt);
+    state.selectedTask = null;
+  }
+
+  async function onCategoryChanged(category){
+    clearTaskSelect(category ? "Loading tasks…" : "Select a category first…");
+    updateStandardsReadout(null);
+    if (!category) return;
+
+    try {
+      let tasks = state.tasksByCategory[category];
+      if (!tasks){
+        const res = await fetch(
+          apiUrl("/api/cad/standards/categories/" + encodeURIComponent(category) + "/tasks")
+        );
+        const data = await res.json();
+        if (!res.ok || data.status === "error"){
+          throw new Error(data.message || ("HTTP " + res.status));
+        }
+        tasks = data.tasks || [];
+        state.tasksByCategory[category] = tasks;
       }
+      const taskSelect = el("taskSelect");
+      taskSelect.innerHTML = "";
+      const blank = document.createElement("option");
+      blank.value = "";
+      blank.textContent = "Select task / activity…";
+      taskSelect.appendChild(blank);
+      tasks.forEach((task) => {
+        const opt = document.createElement("option");
+        opt.value = task.ref_no;
+        opt.textContent = task.task_or_activity + " (" + task.ref_no + ")";
+        taskSelect.appendChild(opt);
+      });
+    } catch (err) {
+      clearTaskSelect("Failed to load tasks");
+      toast("Could not load tasks for category: " + err.message);
     }
-    return "No category matched";
   }
 
-  function getPlaceDefaultStandardRef(placeName){
-    const place = state.places[placeName] || {};
-    for (const key of ["standard_ref_no","standard_ref","default_standard_ref_no","reference","ref_no"]){
-      if (place[key]) return String(place[key]).trim();
-    }
-    return "";
+  function onTaskChanged(refNo){
+    const category = el("categorySelect").value;
+    const tasks = state.tasksByCategory[category] || [];
+    state.selectedTask = tasks.find((t) => t.ref_no === refNo) || null;
+    updateStandardsReadout(state.selectedTask);
   }
 
-  function onPlaceChanged(placeName){
-    const place = state.places[placeName] || {};
-    const category = findCategory(placeName);
+  function updateStandardsReadout(task){
+    if (!task){
+      el("placeReadout").innerHTML =
+        "<span>Lux: <b>–</b></span><span>Uniformity: <b>–</b></span><span>Ref: <b>–</b></span>";
+      return;
+    }
     el("placeReadout").innerHTML =
-      "<span>Lux: <b>" + (place.lux ?? "–") + "</b></span>" +
-      "<span>Uniformity: <b>" + (place.uniformity ?? "–") + "</b></span>" +
-      "<span>Category: <b>" + category + "</b></span>";
+      "<span>Lux: <b>" + (task.Em_r_lx ?? "–") + "</b></span>" +
+      "<span>Uniformity: <b>" + (task.Uo ?? "–") + "</b></span>" +
+      "<span>Ref: <b>" + (task.ref_no ?? "–") + "</b></span>";
+  }
 
-    const refInput = el("standardRefInput");
-    if (!refInput.value.trim()){
-      const def = getPlaceDefaultStandardRef(placeName);
-      if (def) refInput.value = def;
+  async function detectStandardsForRoom(room){
+    const text = (room && room.name) ? String(room.name).trim() : "";
+    if (!text || /^Room\s+\d+$/i.test(text)) return;
+    try {
+      const res = await fetch(apiUrl("/api/cad/standards/detect"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, limit: 5 }),
+      });
+      const data = await res.json();
+      const match = (data.matches || [])[0];
+      if (!match || !match.category) return;
+
+      const catSelect = el("categorySelect");
+      if (![...catSelect.options].some((o) => o.value === match.category)) return;
+      catSelect.value = match.category;
+      await onCategoryChanged(match.category);
+
+      const preferredRefs = match.ref_nos || [];
+      const sampleRef = (match.sample_tasks && match.sample_tasks[0] && match.sample_tasks[0].ref_no) || preferredRefs[0];
+      if (sampleRef && [...el("taskSelect").options].some((o) => o.value === sampleRef)){
+        el("taskSelect").value = sampleRef;
+        onTaskChanged(sampleRef);
+      }
+    } catch (_) {
+      /* detection is best-effort */
     }
   }
 
@@ -821,6 +885,7 @@
       " | area: " + room.area + " m² | perimeter: " + (room.perimeter ?? "-") + " m";
     el("calculateBtn").disabled = false;
     draw();
+    detectStandardsForRoom(room);
   }
 
   function selectDoor(idx){
@@ -969,9 +1034,14 @@
   async function runCalculation(){
     if (!state.selectedRoomId || !state.sessionId) return;
 
-    const place = el("placeSelect").value;
+    const task = state.selectedTask;
+    const standardRef = task && task.ref_no ? task.ref_no : el("taskSelect").value;
+    if (!standardRef){
+      toast("Select a standard category and task / activity first.");
+      return;
+    }
+
     const height = parseFloat(el("heightInput").value);
-    const standardRef = el("standardRefInput").value.trim();
     const projectName = el("projectNameInput").value.trim();
 
     const btn = el("calculateBtn");
@@ -985,8 +1055,8 @@
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            place, height,
-            standard_ref_no: standardRef || null,
+            height,
+            standard_ref_no: standardRef,
             project_name: projectName,
             fast: false,
           }),
@@ -1086,9 +1156,12 @@
 
     let html = "<div class='result-status " + (result.status === "success" ? "success" : "error") + "'>" +
       (result.status === "success" ? "●" : "✕") + " " + (result.status || "-") + "</div>";
-    html += "<div class='empty-note' style='margin-bottom:14px;'>" +
-      results.length + " option(s) · " + fmt(result.length,2) + " × " + fmt(result.width,2) + " m room" +
-    "</div>";
+    const poly = (result.calculation_meta && result.calculation_meta.polygon) || null;
+    let roomSummary = results.length + " option(s) · equiv. " + fmt(result.length,2) + " × " + fmt(result.width,2) + " m";
+    if (poly){
+      roomSummary += " · polygon " + (poly.vertex_count || (poly.vertices||[]).length) + " sides · " + fmt(poly.area_m2,2) + " m²";
+    }
+    html += "<div class='empty-note' style='margin-bottom:14px;'>" + roomSummary + "</div>";
 
     if (!results.length){
       html += "<div class='empty-note'>No fixture options returned.</div>";

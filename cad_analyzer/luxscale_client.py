@@ -32,6 +32,27 @@ class LuxScaleClient:
 
         return response.json()
 
+    def cad_calc(
+        self,
+        vertices,
+        height,
+        place="",
+        standard_ref_no=None,
+        project_name="CAD Lighting Analysis",
+        fast=False,
+    ):
+        """Delegate to the root LuxScaleClient — prefer importing that module."""
+        from luxscale_client import LuxScaleClient as RootClient
+
+        return RootClient(self.base_url, timeout=self.timeout).cad_calc(
+            vertices=vertices,
+            height=height,
+            place=place,
+            standard_ref_no=standard_ref_no,
+            project_name=project_name,
+            fast=fast,
+        )
+
     def calculate(
 
         self,
