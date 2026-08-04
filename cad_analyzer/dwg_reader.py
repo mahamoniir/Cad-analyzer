@@ -5,11 +5,22 @@ from typing import Optional
 import math
 import shutil
 import subprocess
+import sys
 import tempfile
 from collections import Counter
 import os
 import ezdxf
 from ezdxf import edgeminer
+
+
+# Typical Windows install locations for ODA File Converter.
+# Checked only when running locally on Windows (deploy uses Linux paths).
+_WINDOWS_ODA_CANDIDATES = [
+    r"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe",
+    r"C:\Program Files\ODA\ODAFileConverter 27.1.0\ODAFileConverter.exe",
+    r"C:\Program Files\ODA\ODAFileConverter 26.12.0\ODAFileConverter.exe",
+    r"C:\Program Files (x86)\ODA\ODAFileConverter\ODAFileConverter.exe",
+]
 
 
 class DWGReader:
@@ -105,10 +116,27 @@ class DWGReader:
         if self.oda_path and Path(self.oda_path).exists():
             return str(self.oda_path)
 
-        # Env var set in the Dockerfile (points at the real Linux binary)
-        env_path = os.environ.get("ODA_REAL_BIN")
-        if env_path and Path(env_path).exists():
-            return env_path
+        # Local Windows: use installed ODA under Program Files.
+        # Deployed Linux containers never hit this branch.
+        if sys.platform == "win32":
+            for candidate in _WINDOWS_ODA_CANDIDATES:
+                if Path(candidate).exists():
+                    return candidate
+            # Also pick up versioned folders like "ODAFileConverter 27.1.0"
+            for base in (
+                Path(r"C:\Program Files\ODA"),
+                Path(r"C:\Program Files (x86)\ODA"),
+            ):
+                if not base.is_dir():
+                    continue
+                for exe in base.glob("ODAFileConverter*/ODAFileConverter.exe"):
+                    return str(exe)
+
+        # Env vars set in the Dockerfile (Linux deploy)
+        for env_key in ("LUXSCALE_ODA_PATH", "ODA_REAL_BIN"):
+            env_path = os.environ.get(env_key)
+            if env_path and Path(env_path).exists():
+                return env_path
 
         # Resolve via PATH — finds /usr/local/bin/ODAFileConverter
         # (the xvfb wrapper) since it precedes /usr/bin in PATH.

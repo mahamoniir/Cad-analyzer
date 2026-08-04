@@ -63,10 +63,48 @@ UPLOAD_ROOT = Path(
 # How long an uploaded/parsed session stays in memory before being evicted.
 SESSION_TTL_S = int(os.environ.get("LUXSCALE_CAD_SESSION_TTL_S", 60 * 60 * 2))  # 2h default
 
-# Optional explicit path to ODAFileConverter.exe, same as DWGReader's own
-# constructor argument. If unset, DWGReader falls back to its built-in
-# search list.
-ODA_PATH = os.environ.get("LUXSCALE_ODA_PATH") or None
+# Optional explicit path to ODAFileConverter.
+# - Local (Windows): prefer a path that actually exists on this machine
+#   (hardcoding a Windows path in env/code breaks Railway deploy).
+# - Deploy (Linux/Docker): Dockerfile sets LUXSCALE_ODA_PATH to the
+#   xvfb wrapper; that path exists in the container so it is used.
+# If nothing resolves here, DWGReader.find_oda_converter() searches.
+def _resolve_oda_path() -> str | None:
+    env_path = os.environ.get("LUXSCALE_ODA_PATH")
+    if env_path and Path(env_path).exists():
+        return env_path
+
+    # Local Windows installs — never force these on Linux deploy.
+    if sys.platform == "win32":
+        for candidate in (
+            r"C:\Program Files\ODA\ODAFileConverter\ODAFileConverter.exe",
+            r"C:\Program Files\ODA\ODAFileConverter 27.1.0\ODAFileConverter.exe",
+            r"C:\Program Files (x86)\ODA\ODAFileConverter\ODAFileConverter.exe",
+        ):
+            if Path(candidate).exists():
+                return candidate
+        for base in (
+            Path(r"C:\Program Files\ODA"),
+            Path(r"C:\Program Files (x86)\ODA"),
+        ):
+            if not base.is_dir():
+                continue
+            for exe in base.glob("ODAFileConverter*/ODAFileConverter.exe"):
+                return str(exe)
+
+    # Linux deploy fallbacks (when LUXSCALE_ODA_PATH is unset/missing)
+    if sys.platform.startswith("linux"):
+        for candidate in (
+            "/usr/local/bin/ODAFileConverter",
+            "/usr/bin/ODAFileConverter",
+        ):
+            if Path(candidate).exists():
+                return candidate
+
+    return None
+
+
+ODA_PATH = _resolve_oda_path()
 
 # Base URL the internal LuxScaleClient calls back into for /calculate.
 # Defaults to localhost since this blueprint is expected to run inside
