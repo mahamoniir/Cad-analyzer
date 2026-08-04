@@ -2,3 +2,7 @@
 deploy/*.deb
 deploy/*.rpm
 deploy/*.AppImage
+*/__pycache__
+*/__pycache__/*
+__pycache__
+__pycache__/*
